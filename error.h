@@ -17,7 +17,7 @@ extern char error_buffer[128];
 		snprintf( \
 			error_buffer, \
 			sizeof(error_buffer), \
-			"In function <%s>|%i|: %s", \
+			"<%s>(%i): %s\n", \
 			__func__, \
 			__LINE__, \
 			msg \

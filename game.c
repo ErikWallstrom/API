@@ -64,8 +64,9 @@ void game_start(struct Game* self, void* user_data)
 	Uint64 oldtime = SDL_GetPerformanceCounter();
 	while(!self->done)
 	{
-		self->delta = ((SDL_GetPerformanceCounter() - oldtime) * 1000.f) /
+		self->delta = (float)(SDL_GetPerformanceCounter() - oldtime) /
 			SDL_GetPerformanceFrequency();
+		printf("%f\n", self->delta);
 		oldtime = SDL_GetPerformanceCounter();
 
 		self->done = !window_update(self->window);
