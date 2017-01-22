@@ -48,10 +48,12 @@ struct Game* game_ctor(int width, int height, struct GameLoop loop)
 			WINDOW_RENDERER : 
 			WINDOW_RENDERER | WINDOW_VSYNC
 	);
+
 	self->scenes = vec_ctor(sizeof(struct Scene*), 0);
 	self->loop = loop;
 	self->selectedscene = 0;
 	self->done = 0;
+
 	return self;
 }
 
@@ -69,10 +71,11 @@ void game_start(struct Game* self, void* user_data)
 
 	double oldtime = SDL_GetPerformanceCounter() * 1000.0;
 	double lag = 0.0;
+	double sleeptime = 0.0;
+	double sleeptick = SDL_GetTicks();
 
 	while(!self->done)
 	{
-		Uint32 startticks = SDL_GetTicks();
 		double msperupdate = 1000.0 / (double)self->loop.ticks;
 		double curtime = SDL_GetPerformanceCounter() * 1000.0;
 		double delta = (curtime - oldtime) / SDL_GetPerformanceFrequency();
@@ -119,10 +122,11 @@ void game_start(struct Game* self, void* user_data)
 
 		if(self->loop.fpslimit > 0)
 		{
-			int delay = (1000.0 / (double)self->loop.fpslimit) - 
-				(SDL_GetTicks() - startticks);
-			if(delay > 0)
-				SDL_Delay(delay);
+			sleeptick += 1000.0 / self->loop.fpslimit;
+			sleeptime = sleeptick - SDL_GetTicks();
+
+			if(sleeptime >= 0)
+				SDL_Delay(sleeptime);
 		}
 	}
 }

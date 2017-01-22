@@ -66,14 +66,14 @@ int main(void)
 	struct Rectangle player = {
 		.x = 50.0, .y = 50.0, 
 		.w = 50, .h = 50, 
-		.speed = 5.0, 
+		.speed = 10.0, 
 		.changex = 0.0, .changey = 0.0
 	};
 	
 	struct Game* game = game_ctor(
 		800, 600, 
 		(struct GameLoop){
-			.fpslimit = FPSLIMIT_VSYNC,
+			.fpslimit = FPSLIMIT_UNLIMITED,
 			.ticks = 60
 		}
 	);
