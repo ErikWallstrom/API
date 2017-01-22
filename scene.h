@@ -1,21 +1,33 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-enum SceneChange
-{
-	SCENE_CHANGE_NONE,
-	SCENE_CHANGE_PREV,
-	SCENE_CHANGE_NEXT
-};
-
-struct Game;
+struct Window;
 struct Scene;
 
-typedef void(*SceneUpdate)(struct Scene*, struct Game*, void*);
+typedef struct SDL_Renderer SDL_Renderer;
+typedef void(*SceneUpdate)(
+	struct Scene* scene, 
+	struct Window* window, 
+	void* userdata
+);
+
+typedef void(*SceneRender)(
+	SDL_Renderer* renderer, 
+	double interpolation, 
+	void* userdata
+);
+
+enum SceneChange
+{
+	SCENECHANGE_NONE,
+	SCENECHANGE_PREV,
+	SCENECHANGE_NEXT
+};
 
 struct Scene
 {
 	SceneUpdate update;
+	SceneRender render;
 	enum SceneChange change;
 };
 

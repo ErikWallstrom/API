@@ -61,6 +61,9 @@ struct Window* window_ctor(
 			debug(SDL_GetError(), ERRORTYPE_CRITICAL);
 	}
 		
+	self->fps = 0;
+	self->frames = 0;
+	self->oldticks = 0;
 	self->flags = flags;
 	self->width = width;
 	self->height = height;
@@ -114,6 +117,14 @@ int window_update(struct Window* self)
 		SDL_RenderPresent(self->renderer);
 		SDL_RenderClear(self->renderer);
 	}
+
+	if(SDL_GetTicks() / 1000 > self->oldticks)
+	{
+		self->oldticks = SDL_GetTicks() / 1000;
+		self->fps = self->frames;
+		self->frames = 0;
+	}
+	self->frames++;
 	return 1;
 }
 
