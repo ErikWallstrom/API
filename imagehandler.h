@@ -1,7 +1,7 @@
 #ifndef IMAGEHANDLER_H
 #define IMAGEHANDLER_H
 
-#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include "vec.h"
 
 typedef size_t ImageID;

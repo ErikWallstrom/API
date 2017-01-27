@@ -1,7 +1,6 @@
 #include "imagehandler.h"
 #include "error.h"
 
-#include <SDL2/SDL_image.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -29,7 +28,7 @@ struct ImageHandler* imagehandler_ctor(SDL_Renderer* renderer)
 	}
 
 	if(!IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG))
-		debug(SDL_GetError(), ERRORTYPE_CRITICAL);
+		debug(IMG_GetError(), ERRORTYPE_CRITICAL);
 	struct ImageHandler* self = malloc(sizeof(struct ImageHandler));
 	if(!self)
 		debug("malloc", ERRORTYPE_MEMALLOC);
