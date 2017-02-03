@@ -28,6 +28,7 @@ struct Window
 	int mousex, mousey;
 	int width, height;
 	int vsync, fps;
+	int hidden, read;
 
 	/* Only used internally */
 	Uint32 oldticks, frames;

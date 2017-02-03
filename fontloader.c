@@ -97,8 +97,8 @@ struct Texture fontloader_render(
 		texture.raw, 
 		NULL, 
 		NULL, 
-		(int*)&texture.width, 
-		(int*)&texture.height
+		&texture.width,
+		&texture.height
 	);
 
 	return texture;

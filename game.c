@@ -91,6 +91,7 @@ void game_start(struct Game* self, void* user_data)
 				while(lag >= msperupdate)
 				{
 					scene->update(scene, self->window, user_data);
+					self->window->read = 1;
 					lag -= msperupdate;
 				}
 			}

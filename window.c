@@ -62,7 +62,9 @@ struct Window* window_ctor(
 	}
 		
 	self->fps = 0;
+	self->read = 0;
 	self->frames = 0;
+	self->hidden = 0;
 	self->oldticks = 0;
 	self->flags = flags;
 	self->width = width;
@@ -84,7 +86,12 @@ int window_update(struct Window* self)
 {
 	assert(self);
 	SDL_Event event;
-	vec_set(&self->events, NULL, 0);
+	if(self->read)
+	{
+		vec_set(&self->events, NULL, 0);
+		self->read = 0;
+	}
+
 	while(SDL_PollEvent(&event))
 	{
 		switch(event.type)
@@ -92,11 +99,17 @@ int window_update(struct Window* self)
 		case SDL_QUIT:
 			return 0;
 			break;
+		case SDL_WINDOWEVENT:
+			if(event.window.event == SDL_WINDOWEVENT_HIDDEN)
+				self->hidden = 1;
+			else if(event.window.event == SDL_WINDOWEVENT_HIDDEN)
+				self->hidden = 0;
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
 		case SDL_TEXTEDITING:
+
 		case SDL_TEXTINPUT:
 			vec_pushback(&self->events, event);
 		default:
@@ -125,6 +138,11 @@ int window_update(struct Window* self)
 		self->frames = 0;
 	}
 	self->frames++;
+
+	/*
+	if(self->hidden) //Temporary fix vsync minimize problem
+		SDL_Delay(16);
+		*/
 	return 1;
 }
 

@@ -6,7 +6,7 @@
 struct Texture
 {
 	SDL_Texture* raw;
-	size_t width, height;
+	int width, height;
 };
 
 #endif

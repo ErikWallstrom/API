@@ -48,8 +48,8 @@ struct Texture imageloader_load(struct ImageLoader* self, const char* file)
 		image.raw, 
 		NULL, 
 		NULL, 
-		(int*)&image.width, 
-		(int*)&image.height
+		&image.width, 
+		&image.height
 	);
 
 	return image;
