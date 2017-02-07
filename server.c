@@ -4,8 +4,6 @@
 
 struct Server* server_ctor(void* userdata)
 {
-	assert(userdata);
-
 	const SDL_version *link_version = SDLNet_Linked_Version();
 	SDL_version compile_version;
 	SDL_NET_VERSION(&compile_version);
@@ -129,6 +127,8 @@ void server_update(struct Server* self)
 			{
 				if(self->tcphandlers.tcpconnect(
 					&client,
+					((int)vec_getsize(&self->tcpclients) >= 
+					 	self->tcpmaxclients) ? 1 : 0,
 					self->userdata
 				)) /* API user wants client to connect */
 				{

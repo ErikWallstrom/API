@@ -6,8 +6,7 @@
 
 enum FPSLimit
 {
-	FPSLIMIT_UNLIMITED = -2,
-	FPSLIMIT_VSYNC = -1,
+	FPSLIMIT_UNLIMITED = -1,
 };
 
 struct GameLoop
@@ -18,14 +17,14 @@ struct GameLoop
 
 struct Game
 {
-	struct Window* window;
 	Vec(struct Scene*) scenes;
+	struct Window* window;
 	struct GameLoop loop;
 	size_t selectedscene;
 	int done;
 };
 
-struct Game* game_ctor(int width, int height, struct GameLoop loop);
+struct Game* game_ctor(struct GameLoop loop, struct Window* window);
 void game_add(struct Game* self, struct Scene* scene);
 void game_start(struct Game* self, void* userdata);
 void game_dtor(struct Game* self);

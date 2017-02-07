@@ -4,8 +4,6 @@
 
 struct Client* client_ctor(void* userdata)
 {
-	assert(userdata);
-
 	const SDL_version *link_version = SDLNet_Linked_Version();
 	SDL_version compile_version;
 	SDL_NET_VERSION(&compile_version);

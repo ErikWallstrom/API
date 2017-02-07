@@ -1,18 +1,18 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-struct Window;
+struct Game;
 struct Scene;
 
 typedef struct SDL_Renderer SDL_Renderer;
 typedef void(*SceneUpdate)(
 	struct Scene* scene, 
-	struct Window* window, 
+	struct Game* window, 
 	void* userdata
 );
 
 typedef void(*SceneRender)(
-	SDL_Renderer* renderer, 
+	struct Game* game,
 	double interpolation, 
 	void* userdata
 );

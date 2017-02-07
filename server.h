@@ -19,7 +19,7 @@ struct ServerTCPClient
 };
 
 /* return 1 if client is accepted */
-typedef int(*ServerOnConnect)(struct ServerTCPClient*, void*);
+typedef int(*ServerOnConnect)(struct ServerTCPClient*, int full, void*);
 typedef void(*ServerOnDisconnect)(
 	struct ServerTCPClient*,
 	enum ServerDisconnectReason, 

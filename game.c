@@ -3,12 +3,9 @@
 #include <time.h>
 #include <assert.h>
 
-struct Game* game_ctor(int width, int height, struct GameLoop loop)
+struct Game* game_ctor(struct GameLoop loop, struct Window* window)
 {
-	assert(width > 0);
-	assert(height > 0);
 	assert(loop.ticks > 0);
-	assert(loop.fpslimit);
 	assert(loop.fpslimit >= FPSLIMIT_UNLIMITED);
 
 	SDL_version compile_version;
@@ -40,20 +37,12 @@ struct Game* game_ctor(int width, int height, struct GameLoop loop)
 		debug(SDL_GetError(), ERRORTYPE_CRITICAL);
 
 	srand(time(NULL));
-	self->window = window_ctor(
-		"Game Window", 
-		width, 
-		height, 
-		(loop.fpslimit != FPSLIMIT_VSYNC) ? 
-			WINDOW_RENDERER : 
-			WINDOW_RENDERER | WINDOW_VSYNC
-	);
 
 	self->scenes = vec_ctor(sizeof(struct Scene*), 0);
+	self->window = window;
 	self->loop = loop;
 	self->selectedscene = 0;
 	self->done = 0;
-
 	return self;
 }
 
@@ -82,7 +71,8 @@ void game_start(struct Game* self, void* user_data)
 		oldtime = curtime;
 		lag += delta;
 
-		self->done = !window_update(self->window);
+		if(self->window)
+			self->done = !window_update(self->window);
 		if(vec_getsize(&self->scenes))
 		{
 			struct Scene* scene = self->scenes[self->selectedscene];
@@ -90,16 +80,18 @@ void game_start(struct Game* self, void* user_data)
 			{
 				while(lag >= msperupdate)
 				{
-					scene->update(scene, self->window, user_data);
-					self->window->read = 1;
+					scene->update(scene, self, user_data);
 					lag -= msperupdate;
+
+					if(self->window)
+						self->window->read = 1;
 				}
 			}
 			if(scene->render)
 			{
 				double interpolation = lag / msperupdate;
 				scene->render(
-					self->window->renderer, 
+					self,
 					interpolation,
 					user_data
 				);
@@ -135,7 +127,6 @@ void game_start(struct Game* self, void* user_data)
 void game_dtor(struct Game* self)
 {
 	assert(self);
-	window_dtor(self->window);
 	vec_dtor(&self->scenes);
 
 	free(self);
