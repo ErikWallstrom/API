@@ -4,9 +4,6 @@
 #include <SDL2/SDL_net.h>
 #include "vec.h"
 
-struct Client;
-struct Server;
-
 enum ServerDisconnectReason
 {
 	SERVERDISCONNECT_KICKED,
@@ -14,65 +11,79 @@ enum ServerDisconnectReason
 	SERVERDISCONNECT_USER
 };
 
+struct ServerTCPClient
+{
+	IPaddress address;
+	TCPsocket socket;
+	void* userdata;
+};
+
 /* return 1 if client is accepted */
-typedef int(*ServerOnConnect)(struct Client*, void*);
-/* return 0 if client should be removed */
-typedef int(*ServerOnTCPData)(struct Client*, size_t, char*, void*);
+typedef int(*ServerOnConnect)(struct ServerTCPClient*, void*);
 typedef void(*ServerOnDisconnect)(
-	struct Client*,
+	struct ServerTCPClient*,
 	enum ServerDisconnectReason, 
 	void*
 );
-typedef int(*ServerOnUDPData)(IPaddress, size_t, char*, void*);
 
-enum ServerType 
-{
-	SERVERTYPE_TCP = 1 << 0,
-	SERVERTYPE_UDP = 1 << 1
-};
+typedef void(*ServerOnUDPData)(IPaddress, size_t, char*, void*);
+/* return 0 if client should be removed */
+typedef int(*ServerOnTCPData)(
+	struct ServerTCPClient*,
+	size_t, 
+	char*, 
+	void*
+);
 
-struct ServerEventHandlers
+struct ServerTCPEventHandlers
 {
 	ServerOnConnect tcpconnect;
 	ServerOnDisconnect tcpdisconnect;
 	ServerOnTCPData tcpreceived;
-
-	ServerOnUDPData udpreceived;
 };
 
-struct Client
+enum ServerType 
 {
-	IPaddress address;
-	void* userdata;
-
-	/* Not mandatory */
-	TCPsocket socket;
+	SERVERTYPE_NONE = 0,
+	SERVERTYPE_TCP = 1 << 0,
+	SERVERTYPE_UDP = 1 << 1
 };
 
 struct Server
 {
-	struct ServerEventHandlers eventhandlers;
-	IPaddress address;
-	/* Union-ish */
-	struct {
-		UDPpacket packet;
-		UDPsocket udp;
+	struct ServerTCPEventHandlers tcphandlers;
+	Vec(struct ServerTCPClient) tcpclients;
+	IPaddress tcpaddress;
+	SDLNet_SocketSet tcpsocketset;
+	TCPsocket tcpsocket;
+	char* tcpbuffer;
+	int tcpmaxbufsize;
+	int tcpmaxclients;
+	int tcpport;
 
-		SDLNet_SocketSet socketset;
-		TCPsocket tcp; 
-		char* buffer;
-		int maxbufsize;
-	};
-
-	Vec(struct Client) clients;
-	int maxclients;
+	ServerOnUDPData udphandler;
+	UDPpacket udppacket;
+	UDPsocket udpsocket;
+	int udpport;
 
 	void* userdata;
-	enum ServerType type;
-	Uint16 port;
+	int type;
 };
 
-struct Server* server_ctor(int port, int maxclients, int maxbufsize, void* userdata, struct ServerEventHandlers eventhandlers, enum ServerType type);
+struct Server* server_ctor(void* userdata);
+int server_inittcp(
+	struct Server* self, 
+	int port,
+	int maxbufsize,
+	int maxclients,
+	struct ServerTCPEventHandlers handlers
+);
+int server_initudp(
+	struct Server* self, 
+	int port, 
+	int maxbufsize,
+	ServerOnUDPData ondata
+);
 void server_update(struct Server* self);
 void server_dtor(struct Server* self);
 

@@ -2,18 +2,9 @@
 #include "error.h"
 #include <assert.h>
 
-struct Server* server_ctor(
-	int port, 
-	int maxclients, 
-	int maxbufsize, 
-	void* userdata, 
-	struct ServerEventHandlers eventhandlers, 
-	enum ServerType type
-)
+struct Server* server_ctor(void* userdata)
 {
-	assert(port < (1 << 16));
-	assert(maxbufsize > 0);
-	assert(type == SERVERTYPE_TCP || type == SERVERTYPE_UDP);
+	assert(userdata);
 
 	const SDL_version *link_version = SDLNet_Linked_Version();
 	SDL_version compile_version;
@@ -41,61 +32,84 @@ struct Server* server_ctor(
 	if(!self)
 		error("malloc", ERRORTYPE_MEMALLOC);
 	
-	self->port = port;
-	self->type = type;
+	*self = (struct Server){0};
 	self->userdata = userdata;
-	self->maxclients = maxclients;
-	self->maxbufsize = maxbufsize;
-	self->eventhandlers = eventhandlers;
-	self->clients = vec_ctor(sizeof(struct Client), maxclients);
+	return self;
+}
 
-	if(SDLNet_ResolveHost(&self->address, NULL, self->port))
+int server_inittcp(
+	struct Server* self, 
+	int port,
+	int maxbufsize,
+	int maxclients,
+	struct ServerTCPEventHandlers handlers
+)
+{
+	assert(self);
+	assert(!(self->type & SERVERTYPE_TCP));
+	assert(port < (1 << 16));
+	assert(maxbufsize > 0);
+	assert(maxclients > 0);
+
+	if(SDLNet_ResolveHost(&self->tcpaddress, NULL, port))
 		debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
 
-	if(type & SERVERTYPE_TCP)
+	self->tcpsocket = SDLNet_TCP_Open(&self->tcpaddress);
+	if(!self->tcpsocket)
 	{
-		self->tcp = SDLNet_TCP_Open(&self->address);
-		if(!self->tcp)
-			debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
-		self->buffer = malloc(maxbufsize);
-		if(!self->buffer)
-			debug("malloc", ERRORTYPE_MEMALLOC);
-		self->socketset = SDLNet_AllocSocketSet(maxclients + 1);
-		if(!self->socketset)
-			debug("SDLNet_AllocSocketSet", ERRORTYPE_MEMALLOC);
-		SDLNet_TCP_AddSocket(self->socketset, self->tcp);
-	}
-	else
-	{
-		self->tcp = NULL;
-		self->buffer = NULL;
-		self->socketset = NULL;
+		//debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
+		puts(SDLNet_GetError());
+		return 0;
 	}
 
-	if(type & SERVERTYPE_UDP)
-	{
-		self->udp = SDLNet_UDP_Open(self->port);
-		if(!self->udp)
-			debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
-		if(self->buffer)
-			self->packet.data = (Uint8*)self->buffer;
-		else
-		{
-			self->packet.data = malloc(maxbufsize);
-			if(!self->packet.data)
-				debug("malloc", ERRORTYPE_MEMALLOC);
-		}
+	self->tcpbuffer = malloc(maxbufsize);
+	if(!self->tcpbuffer)
+		debug("malloc", ERRORTYPE_MEMALLOC);
+	self->tcpsocketset = SDLNet_AllocSocketSet(maxclients + 1);
+	if(!self->tcpsocketset)
+		debug("SDLNet_AllocSocketSet", ERRORTYPE_MEMALLOC);
 
-		self->packet.maxlen = maxbufsize;
-		self->packet.len = maxbufsize;
-	}
-	else
-	{
-		self->udp = NULL;
-		self->packet = (UDPpacket){0};
-	}
+	SDLNet_TCP_AddSocket(self->tcpsocketset, self->tcpsocket);
+	self->tcpclients = vec_ctor(sizeof(struct ServerTCPClient), maxclients);
 
-	return self;
+	self->type |= SERVERTYPE_TCP;
+	self->tcpport = port;
+	self->tcphandlers = handlers;
+	self->tcpmaxbufsize = maxbufsize;
+	self->tcpmaxclients = maxclients;
+	return 1;
+}
+
+int server_initudp(
+	struct Server* self, 
+	int port, 
+	int maxbufsize,
+	ServerOnUDPData ondata
+)
+{
+	assert(self);
+	assert(!(self->type & SERVERTYPE_UDP));
+	assert(port < (1 << 16));
+	assert(maxbufsize > 0);
+
+	self->udpsocket = SDLNet_UDP_Open(port);
+	if(!self->udpsocket)
+	{
+		//debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
+		puts(SDLNet_GetError());
+		return 0;
+	}
+	self->udppacket.data = malloc(maxbufsize);
+	if(!self->udppacket.data)
+		debug("malloc", ERRORTYPE_MEMALLOC);
+
+	self->udppacket.maxlen = maxbufsize;
+	self->udppacket.len = maxbufsize;
+
+	self->type |= SERVERTYPE_UDP;
+	self->udphandler = ondata;
+	self->udpport = port;
+	return 1;
 }
 
 void server_update(struct Server* self)
@@ -103,55 +117,55 @@ void server_update(struct Server* self)
 	assert(self);
 	if(self->type & SERVERTYPE_TCP)
 	{
-		SDLNet_CheckSockets(self->socketset, 0);
-		TCPsocket newclient = SDLNet_TCP_Accept(self->tcp);
+		SDLNet_CheckSockets(self->tcpsocketset, 0);
+		TCPsocket newclient = SDLNet_TCP_Accept(self->tcpsocket);
 		if(newclient)
 		{
-			struct Client client = (struct Client){
+			struct ServerTCPClient client = (struct ServerTCPClient){
 				.socket = newclient,
 				.address = *SDLNet_TCP_GetPeerAddress(newclient)
 			};
-			if(self->eventhandlers.tcpconnect)
+			if(self->tcphandlers.tcpconnect)
 			{
-				if(self->eventhandlers.tcpconnect(
+				if(self->tcphandlers.tcpconnect(
 					&client,
 					self->userdata
-				))
+				)) /* API user wants client to connect */
 				{
-					SDLNet_TCP_AddSocket(self->socketset, client.socket);
-					vec_pushback(&self->clients, client);
+					SDLNet_TCP_AddSocket(self->tcpsocketset, client.socket);
+					vec_pushback(&self->tcpclients, client);
 				}
 				else /* API user don't want client to connect */
 				{
 					SDLNet_TCP_Close(client.socket);
 				}
 			}
-			else /* default */
+			else /* default behavior */
 			{
-				SDLNet_TCP_AddSocket(self->socketset, client.socket);
-				vec_pushback(&self->clients, client);
+				SDLNet_TCP_AddSocket(self->tcpsocketset, client.socket);
+				vec_pushback(&self->tcpclients, client);
 			}
 		}
 
-		for(size_t i = 0; i < vec_getsize(&self->clients); i++)
+		for(size_t i = 0; i < vec_getsize(&self->tcpclients); i++)
 		{
-			if(SDLNet_SocketReady(self->clients[i].socket))
+			if(SDLNet_SocketReady(self->tcpclients[i].socket))
 			{
 				int recv = SDLNet_TCP_Recv(
-					self->clients[i].socket, 
-					self->buffer, 
-					self->maxbufsize
+					self->tcpclients[i].socket, 
+					self->tcpbuffer, 
+					self->tcpmaxbufsize
 				);
-				if(recv <= 0) /* Client disconnected or error */
+				if(recv <= 0) /* ServerClient disconnected or error */
 				{
-					struct Client c = self->clients[i];
-					SDLNet_TCP_DelSocket(self->socketset, c.socket);
+					struct ServerTCPClient c = self->tcpclients[i];
+					SDLNet_TCP_DelSocket(self->tcpsocketset, c.socket);
 					SDLNet_TCP_Close(c.socket);
 
-					vec_collapse(&self->clients, i, 1);
-					if(self->eventhandlers.tcpdisconnect)
+					vec_collapse(&self->tcpclients, i, 1);
+					if(self->tcphandlers.tcpdisconnect)
 					{
-						self->eventhandlers.tcpdisconnect(
+						self->tcphandlers.tcpdisconnect(
 							&c, 
 							(recv == 0) ? 
 								SERVERDISCONNECT_USER : 
@@ -162,23 +176,23 @@ void server_update(struct Server* self)
 				}
 				else /* Data received */
 				{
-					if(self->eventhandlers.tcpreceived)
+					if(self->tcphandlers.tcpreceived)
 					{
-						if(!self->eventhandlers.tcpreceived(
-							&self->clients[i],
+						if(!self->tcphandlers.tcpreceived(
+							&self->tcpclients[i],
 							recv,
-							self->buffer,
+							self->tcpbuffer,
 							self->userdata
 						))
 						{
-							struct Client c = self->clients[i];
-							SDLNet_TCP_DelSocket(self->socketset, c.socket);
+							struct ServerTCPClient c = self->tcpclients[i];
+							SDLNet_TCP_DelSocket(self->tcpsocketset, c.socket);
 							SDLNet_TCP_Close(c.socket);
 
-							vec_collapse(&self->clients, i, 1);
-							if(self->eventhandlers.tcpdisconnect)
+							vec_collapse(&self->tcpclients, i, 1);
+							if(self->tcphandlers.tcpdisconnect)
 							{
-								self->eventhandlers.tcpdisconnect(
+								self->tcphandlers.tcpdisconnect(
 									&c, 
 									SERVERDISCONNECT_KICKED,
 									self->userdata
@@ -193,15 +207,15 @@ void server_update(struct Server* self)
 
 	if(self->type & SERVERTYPE_UDP)
 	{
-		int status = SDLNet_UDP_Recv(self->udp, &self->packet);
+		int status = SDLNet_UDP_Recv(self->udpsocket, &self->udppacket);
 		if(status > 0)
 		{
-			if(self->eventhandlers.udpreceived)
+			if(self->udphandler)
 			{
-				self->eventhandlers.udpreceived(
-					self->packet.address,
-					self->packet.len,
-					(char*)self->packet.data,
+				self->udphandler(
+					self->udppacket.address,
+					self->udppacket.len,
+					(char*)self->udppacket.data,
 					self->userdata
 				);
 			}
@@ -214,20 +228,21 @@ void server_dtor(struct Server* self)
 	assert(self);
 	if(self->type & SERVERTYPE_UDP)
 	{
-		if(!self->buffer)
-			free(self->packet.data);
-		SDLNet_UDP_Close(self->udp);
+		free(self->udppacket.data);
+		SDLNet_UDP_Close(self->udpsocket);
 	}
 
 	if(self->type & SERVERTYPE_TCP)
 	{
-		for(size_t i = 0; i < vec_getsize(&self->clients); i++)
-			SDLNet_TCP_Close(self->clients[i].socket);
-		free(self->buffer);
-		SDLNet_TCP_Close(self->tcp);
-		SDLNet_FreeSocketSet(self->socketset);
+		for(size_t i = 0; i < vec_getsize(&self->tcpclients); i++)
+			SDLNet_TCP_Close(self->tcpclients[i].socket);
+
+		free(self->tcpbuffer);
+		vec_dtor(&self->tcpclients);
+		SDLNet_TCP_Close(self->tcpsocket);
+		SDLNet_FreeSocketSet(self->tcpsocketset);
 	}
 
-	vec_dtor(&self->clients);
 	free(self);
 }
+
