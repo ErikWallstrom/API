@@ -84,6 +84,18 @@ int server_initudp(
 	int maxbufsize,
 	ServerOnUDPData ondata
 );
+void server_sendtcp(
+	struct Server* self, 
+	struct ServerTCPClient* dest, 
+	void* buffer, 
+	size_t bufsize
+);
+void server_sendudp(
+	struct Server* self, 
+	IPaddress dest, 
+	void* buffer, 
+	size_t bufsize
+);
 void server_update(struct Server* self);
 void server_dtor(struct Server* self);
 

@@ -3,7 +3,7 @@
 #include <time.h>
 #include <assert.h>
 
-struct Game* game_ctor(struct GameLoop loop, struct Window* window)
+struct Game* game_ctor(struct GameLoop loop)
 {
 	assert(loop.ticks > 0);
 	assert(loop.fpslimit >= FPSLIMIT_UNLIMITED);
@@ -39,7 +39,7 @@ struct Game* game_ctor(struct GameLoop loop, struct Window* window)
 	srand(time(NULL));
 
 	self->scenes = vec_ctor(sizeof(struct Scene*), 0);
-	self->window = window;
+	self->window = NULL;
 	self->loop = loop;
 	self->selectedscene = 0;
 	self->done = 0;

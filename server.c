@@ -110,6 +110,76 @@ int server_initudp(
 	return 1;
 }
 
+void server_sendtcp(
+	struct Server* self, 
+	struct ServerTCPClient* dest, 
+	void* buffer, 
+	size_t bufsize
+)
+{
+	assert(self);
+	assert(dest);
+	assert(buffer);
+	assert(bufsize);
+	assert(self->type & SERVERTYPE_TCP);
+	assert((int)bufsize <= self->tcpmaxbufsize);
+
+	int sent = SDLNet_TCP_Send(dest->socket, buffer, bufsize);
+	if(sent < (int)bufsize) /* not sent */
+	{
+		int index = -1;
+		for(size_t i = 0; i < vec_getsize(&self->tcpclients); i++)
+		{
+			if(self->tcpclients[i].socket == dest->socket)
+			{
+				index = (int)i;
+				break;
+			}
+		}
+
+		assert(index != -1);
+
+		SDLNet_TCP_DelSocket(self->tcpsocketset, dest->socket);
+		SDLNet_TCP_Close(dest->socket);
+
+		vec_collapse(&self->tcpclients, index, 1);
+		if(self->tcphandlers.tcpdisconnect)
+		{
+			self->tcphandlers.tcpdisconnect(
+				dest, 
+				SERVERDISCONNECT_USER, /* could be error though */
+				self->userdata
+			);
+		}
+	}
+}
+
+void server_sendudp(
+	struct Server* self, 
+	IPaddress dest, 
+	void* buffer, 
+	size_t bufsize
+)
+{
+	assert(self);
+	assert(buffer);
+	assert(bufsize);
+	assert(self->type & SERVERTYPE_UDP);
+	assert((int)bufsize <= self->udppacket.maxlen);
+
+	memmove(self->udppacket.data, buffer, bufsize);
+	self->udppacket.len = bufsize;
+	self->udppacket.address = dest;
+	int sent = SDLNet_UDP_Send(
+		self->udpsocket, 
+		-1, 
+		&self->udppacket
+	);
+
+	if(!sent)
+		printf("Failed to send udp data to destination");
+}
+
 void server_update(struct Server* self)
 {
 	assert(self);
@@ -220,6 +290,8 @@ void server_update(struct Server* self)
 				);
 			}
 		}
+		else if(status == -1)
+			puts("Something UDP related failed...");
 	}
 }
 

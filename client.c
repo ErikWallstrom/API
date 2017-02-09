@@ -92,7 +92,7 @@ int client_initudp(
 	if(SDLNet_ResolveHost(&self->udpaddress, ip, port))
 		debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
 	
-	self->udpsocket = SDLNet_UDP_Open(port);
+	self->udpsocket = SDLNet_UDP_Open(0);
 	if(!self->udpsocket)
 	{
 		//debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
@@ -114,9 +114,107 @@ int client_initudp(
 	return 1;
 }
 
+void client_sendtcp(struct Client* self, void* buffer, size_t bufsize)
+{
+	assert(self);
+	assert(buffer);
+	assert(bufsize);
+	assert(self->type & CLIENTTYPE_TCP);
+	assert((int)bufsize <= self->tcpmaxbufsize);
+
+	int sent = SDLNet_TCP_Send(self->tcpsocket, buffer, bufsize);
+	if(sent < (int)bufsize) /* not sent */
+	{
+		if(self->tcphandlers.tcpdisconnect)
+		{
+			self->tcphandlers.tcpdisconnect(
+				CLIENTDISCONNECT_ERROR,
+				self->userdata
+			);
+		}
+		/* Temporary */
+		debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
+	}
+}
+
+void client_sendudp(struct Client* self, void* buffer, size_t bufsize)
+{
+	assert(self);
+	assert(buffer);
+	assert(bufsize);
+	assert(self->type & CLIENTTYPE_UDP);
+	assert((int)bufsize <= self->udppacket.maxlen);
+
+	memmove(self->udppacket.data, buffer, bufsize);
+	self->udppacket.len = bufsize;
+	int sent = SDLNet_UDP_Send(
+		self->udpsocket, 
+		0, 
+		&self->udppacket
+	);
+
+	if(!sent)
+		puts("Failed to send udp data to destination");
+}
+
 void client_update(struct Client* self)
 {
 	assert(self);
+	if(self->type & CLIENTTYPE_TCP)
+	{
+		SDLNet_CheckSockets(self->tcpsocketset, 0);
+		if(SDLNet_SocketReady(self->tcpsocket))
+		{
+			int recv = SDLNet_TCP_Recv(
+				self->tcpsocket,
+				self->tcpbuffer, 
+				self->tcpmaxbufsize
+			);
+
+			if(recv <= 0)
+			{
+				if(self->tcphandlers.tcpdisconnect)
+				{
+					self->tcphandlers.tcpdisconnect(
+						CLIENTDISCONNECT_ERROR,
+						self->userdata
+					);
+					puts("Lost connection to server");
+					debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
+				}
+				else
+				{;
+					if(self->tcphandlers.tcpreceived)
+					{
+						self->tcphandlers.tcpreceived(
+							recv,
+							self->tcpbuffer,
+							self->userdata
+						);
+					}
+				}
+			}
+		}
+	}
+
+	if(self->type & CLIENTTYPE_UDP)
+	{
+		int status = SDLNet_UDP_Recv(self->udpsocket, &self->udppacket);
+		if(status > 0)
+		{
+			if(self->udphandler)
+			{
+				self->udphandler(
+					self->udppacket.address,
+					self->udppacket.len,
+					(char*)self->udppacket.data,
+					self->userdata
+				);
+			}
+		}
+		else if(status == -1)
+			puts("Something UDP related failed...");
+	}
 }
 
 void client_dtor(struct Client* self)

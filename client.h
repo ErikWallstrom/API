@@ -67,6 +67,8 @@ int client_initudp(
 	int maxbufsize,
 	ClientOnUDPData ondata
 );
+void client_sendtcp(struct Client* self, void* buffer, size_t bufsize);
+void client_sendudp(struct Client* self, void* buffer, size_t bufsize);
 void client_update(struct Client* self);
 void client_dtor(struct Client* self);
 

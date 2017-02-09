@@ -24,7 +24,7 @@ struct Game
 	int done;
 };
 
-struct Game* game_ctor(struct GameLoop loop, struct Window* window);
+struct Game* game_ctor(struct GameLoop loop);
 void game_add(struct Game* self, struct Scene* scene);
 void game_start(struct Game* self, void* userdata);
 void game_dtor(struct Game* self);
