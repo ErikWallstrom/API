@@ -28,7 +28,7 @@ struct Client* client_ctor(void* userdata)
 
 	struct Client* self = malloc(sizeof(struct Client));
 	if(!self)
-		error("malloc", ERRORTYPE_MEMALLOC);
+		debug("malloc", ERRORTYPE_MEMALLOC);
 	
 	*self = (struct Client){0};
 	self->userdata = userdata;

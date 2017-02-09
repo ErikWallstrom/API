@@ -28,7 +28,7 @@ struct Server* server_ctor(void* userdata)
 
 	struct Server* self = malloc(sizeof(struct Server));
 	if(!self)
-		error("malloc", ERRORTYPE_MEMALLOC);
+		debug("malloc", ERRORTYPE_MEMALLOC);
 	
 	*self = (struct Server){0};
 	self->userdata = userdata;
