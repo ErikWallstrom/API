@@ -1,6 +1,7 @@
 #include "window.h"
 #include "log.h"
-#include <string.h> //Only for strlen on windows...
+#include <string.h>
+#include <stdlib.h>
 
 struct Window* window_ctor(
 	char* title, 

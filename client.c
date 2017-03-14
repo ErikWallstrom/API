@@ -1,5 +1,7 @@
 #include "client.h"
 #include "log.h"
+#include <string.h>
+#include <stdlib.h>
 
 struct Client* client_ctor(void* userdata)
 {
@@ -94,7 +96,7 @@ int client_initudp(
 	if(!self->udpsocket)
 	{
 		//debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
-		puts(SDLNet_GetError());
+		log_warning(SDLNet_GetError());
 		return 0;
 	}
 	self->udppacket.data = malloc(maxbufsize);
@@ -211,7 +213,7 @@ void client_update(struct Client* self)
 			}
 		}
 		else if(status == -1)
-			puts("Something UDP related failed...");
+			log_warning("Something UDP related failed...");
 	}
 }
 

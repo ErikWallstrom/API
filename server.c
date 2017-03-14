@@ -1,5 +1,7 @@
 #include "server.h"
 #include "log.h"
+#include <string.h>
+#include <stdlib.h>
 
 struct Server* server_ctor(void* userdata)
 {

@@ -1,5 +1,6 @@
 #include "fontloader.h"
 #include "log.h"
+#include <stdlib.h>
 
 struct FontLoader* fontloader_ctor(SDL_Renderer* renderer)
 {

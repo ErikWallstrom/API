@@ -1,5 +1,6 @@
 #include "imageloader.h"
 #include "log.h"
+#include <stdlib.h>
 
 struct ImageLoader* imageloader_ctor(SDL_Renderer* renderer)
 {
