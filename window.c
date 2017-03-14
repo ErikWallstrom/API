@@ -75,10 +75,7 @@ struct Window* window_ctor(
 		&self->mousey
 	);
 
-	size_t title_len = strlen(title);
-	self->title = vec_ctor(char, title_len + 1);
-	vec_expand(&self->title, 0, title_len + 1);
-	strcpy(self->title, title);
+	self->title = str_ctor(title);
 	self->events = vec_ctor(SDL_Event, 0);
 	return self;
 }
@@ -156,7 +153,7 @@ void window_dtor(struct Window* self)
 	else
 		SDL_DestroyRenderer(self->renderer);
 
-	vec_dtor(&self->title);
+	str_dtor(&self->title);
 	vec_dtor(&self->events);
 	SDL_DestroyWindow(self->raw);
 	free(self);

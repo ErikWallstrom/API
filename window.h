@@ -2,7 +2,7 @@
 #define WINDOW_H
 
 #include <SDL2/SDL.h>
-#include "vec.h" 
+#include "str.h" 
 
 enum WindowFlags
 {
@@ -14,7 +14,7 @@ enum WindowFlags
 struct Window
 {
 	Vec(SDL_Event) events;
-	Vec(char) title;
+	Str title;
 	SDL_Window* raw;
 	union {
 		SDL_Renderer* renderer;
