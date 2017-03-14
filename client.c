@@ -1,5 +1,4 @@
 #include "client.h"
-#include "error.h"
 #include "log.h"
 
 struct Client* client_ctor(void* userdata)

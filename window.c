@@ -1,5 +1,4 @@
 #include "window.h"
-#include "error.h"
 #include "log.h"
 #include <string.h> //Only for strlen on windows...
 

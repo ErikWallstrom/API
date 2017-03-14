@@ -1,9 +1,9 @@
 #include "game.h"
-#include "error.h"
 #include "log.h"
 #include <time.h>
+#include <stdlib.h>
 
-struct Game* game_ctor(struct GameLoop loop)
+struct Game* game_ctor(struct GameLoop loop, void* userdata)
 {
 	log_assert(loop.ticks > 0, "is 0");
 	log_assert(loop.fpslimit >= FPSLIMIT_UNLIMITED, "invalid fpslimit");
@@ -39,6 +39,7 @@ struct Game* game_ctor(struct GameLoop loop)
 	srand(time(NULL));
 
 	self->scenes = vec_ctor(struct Scene*, 0);
+	self->userdata = userdata;
 	self->window = NULL;
 	self->loop = loop;
 	self->selectedscene = 0;
@@ -54,7 +55,7 @@ void game_add(struct Game* self, struct Scene* scene)
 	vec_pushback(&self->scenes, scene);
 }
 
-void game_start(struct Game* self, void* user_data)
+void game_start(struct Game* self)
 {
 	log_assert(self, "is NULL");
 
@@ -67,7 +68,8 @@ void game_start(struct Game* self, void* user_data)
 	{
 		double msperupdate = 1000.0 / (double)self->loop.ticks;
 		double curtime = SDL_GetPerformanceCounter() * 1000.0;
-		double delta = (curtime - oldtime) / SDL_GetPerformanceFrequency();
+		double delta = (curtime - oldtime) /
+			SDL_GetPerformanceFrequency();
 		oldtime = curtime;
 		lag += delta;
 
@@ -80,7 +82,7 @@ void game_start(struct Game* self, void* user_data)
 			{
 				while(lag >= msperupdate)
 				{
-					scene->update(scene, self, user_data);
+					scene->update(scene, self, self->userdata);
 					lag -= msperupdate;
 
 					if(self->window)
@@ -93,7 +95,7 @@ void game_start(struct Game* self, void* user_data)
 				scene->render(
 					self,
 					interpolation,
-					user_data
+					self->userdata
 				);
 			}
 
@@ -104,12 +106,14 @@ void game_start(struct Game* self, void* user_data)
 					self->selectedscene + 1 < vec_getsize(&self->scenes), 
 					"scene does not exist"
 				);
-				self->scenes[self->selectedscene]->change = SCENECHANGE_NONE;
+				self->scenes[self->selectedscene]->change = 
+					SCENECHANGE_NONE;
 				self->selectedscene++;
 				break;
 			case SCENECHANGE_PREV:
 				log_assert(self->selectedscene > 0, "scene does not exist");
-				self->scenes[self->selectedscene]->change = SCENECHANGE_NONE;
+				self->scenes[self->selectedscene]->change = 
+					SCENECHANGE_NONE;
 				self->selectedscene--;
 				break;
 			default:;

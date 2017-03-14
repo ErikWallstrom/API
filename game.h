@@ -18,15 +18,16 @@ struct GameLoop
 struct Game
 {
 	Vec(struct Scene*) scenes;
+	void* userdata;
 	struct Window* window;
 	struct GameLoop loop;
 	size_t selectedscene;
 	int done;
 };
 
-struct Game* game_ctor(struct GameLoop loop);
+struct Game* game_ctor(struct GameLoop loop, void* userdata);
 void game_add(struct Game* self, struct Scene* scene);
-void game_start(struct Game* self, void* userdata);
+void game_start(struct Game* self);
 void game_dtor(struct Game* self);
 
 #endif
