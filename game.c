@@ -1,12 +1,12 @@
 #include "game.h"
 #include "error.h"
+#include "log.h"
 #include <time.h>
-#include <assert.h>
 
 struct Game* game_ctor(struct GameLoop loop)
 {
-	assert(loop.ticks > 0);
-	assert(loop.fpslimit >= FPSLIMIT_UNLIMITED);
+	log_assert(loop.ticks > 0, "is 0");
+	log_assert(loop.fpslimit >= FPSLIMIT_UNLIMITED, "invalid fpslimit");
 
 	SDL_version compile_version;
 	SDL_version link_version;
@@ -17,8 +17,8 @@ struct Game* game_ctor(struct GameLoop loop)
 		compile_version.minor != link_version.minor ||
 		compile_version.patch != link_version.patch)
 	{
-		printf(
-			"Warning: Program was compiled with SDL version %i.%i.%i,"
+		log_error(
+			"Program was compiled with SDL version %i.%i.%i,"
 			" but was linked with version %i.%i.%i\n",
 			compile_version.major,
 			compile_version.minor,
@@ -31,14 +31,14 @@ struct Game* game_ctor(struct GameLoop loop)
 
 	struct Game* self = malloc(sizeof(struct Game));
 	if(!self)
-		debug("malloc", ERRORTYPE_MEMALLOC);
+		log_error("malloc failed");
 
 	if(SDL_Init(SDL_INIT_VIDEO))
-		debug(SDL_GetError(), ERRORTYPE_CRITICAL);
+		log_error(SDL_GetError());
 
 	srand(time(NULL));
 
-	self->scenes = vec_ctor(sizeof(struct Scene*), 0);
+	self->scenes = vec_ctor(struct Scene*, 0);
 	self->window = NULL;
 	self->loop = loop;
 	self->selectedscene = 0;
@@ -48,15 +48,15 @@ struct Game* game_ctor(struct GameLoop loop)
 
 void game_add(struct Game* self, struct Scene* scene)
 {
-	assert(self);
-	assert(scene);
+	log_assert(self, "is NULL");
+	log_assert(scene, "is NULL");
 
 	vec_pushback(&self->scenes, scene);
 }
 
 void game_start(struct Game* self, void* user_data)
 {
-	assert(self);
+	log_assert(self, "is NULL");
 
 	double oldtime = SDL_GetPerformanceCounter() * 1000.0;
 	double lag = 0.0;
@@ -100,12 +100,15 @@ void game_start(struct Game* self, void* user_data)
 			switch(scene->change)
 			{
 			case SCENECHANGE_NEXT:
-				assert(self->selectedscene + 1 < vec_getsize(&self->scenes));
+				log_assert(
+					self->selectedscene + 1 < vec_getsize(&self->scenes), 
+					"scene does not exist"
+				);
 				self->scenes[self->selectedscene]->change = SCENECHANGE_NONE;
 				self->selectedscene++;
 				break;
 			case SCENECHANGE_PREV:
-				assert(self->selectedscene > 0);
+				log_assert(self->selectedscene > 0, "scene does not exist");
 				self->scenes[self->selectedscene]->change = SCENECHANGE_NONE;
 				self->selectedscene--;
 				break;
@@ -126,7 +129,7 @@ void game_start(struct Game* self, void* user_data)
 
 void game_dtor(struct Game* self)
 {
-	assert(self);
+	log_assert(self, "is NULL");
 	vec_dtor(&self->scenes);
 
 	free(self);

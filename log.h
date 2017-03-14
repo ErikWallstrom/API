@@ -1,8 +1,6 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include <stdio.h>
-
 #define LOGMSGCOLOR_BLACK "\x1b[30"
 #define LOGMSGCOLOR_RED "\x1b[31"
 #define LOGMSGCOLOR_GREEN "\x1b[32"
@@ -16,7 +14,7 @@
 #define LOGMSGCOLOR_RESET "\x1b[0m"
 
 #define log_info(fmt, ...) log_msg(LOGMSGTYPE_INFO, fmt, ##__VA_ARGS__)
-#define log_warning(fmt, ...) log_msg(LOGMSGTYPE_warning, fmt, ##__VA_ARGS__)
+#define log_warning(fmt, ...) log_msg(LOGMSGTYPE_WARNING, fmt, ##__VA_ARGS__)
 #define log_error(fmt, ...) log_msg(LOGMSGTYPE_ERROR, fmt, ##__VA_ARGS__)
 #define log_assert(statement, fmt, ...) \
 	log_assert_( \
@@ -35,7 +33,6 @@ enum LogMsgType
 	LOGMSGTYPE_ERROR,
 };
 
-void log_init(FILE* dest);
 void log_assert_(
 	const char* statement, 
 	int result,

@@ -1,10 +1,10 @@
 #include "imageloader.h"
 #include "error.h"
-#include <assert.h>
+#include "log.h"
 
 struct ImageLoader* imageloader_ctor(SDL_Renderer* renderer)
 {
-	assert(renderer);
+	log_assert(renderer, "is NULL");
 
 	const SDL_version *link_version = IMG_Linked_Version();
 	SDL_version compile_version;
@@ -13,8 +13,8 @@ struct ImageLoader* imageloader_ctor(SDL_Renderer* renderer)
 		compile_version.minor != link_version->minor ||
 		compile_version.patch != link_version->patch)
 	{
-		printf(
-			"Warning: Program was compiled with SDL_image "
+		log_warning(
+			"Program was compiled with SDL_image "
 			"version %i.%i.%i, but was linked with version %i.%i.%i\n",
 			compile_version.major,
 			compile_version.minor,
@@ -26,10 +26,10 @@ struct ImageLoader* imageloader_ctor(SDL_Renderer* renderer)
 	}
 
 	if(!IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG))
-		debug(IMG_GetError(), ERRORTYPE_CRITICAL);
+		log_error(IMG_GetError());
 	struct ImageLoader* self = malloc(sizeof(struct ImageLoader));
 	if(!self)
-		debug("malloc", ERRORTYPE_MEMALLOC);
+		log_error("malloc failed");
 
 	self->renderer = renderer;
 	return self;
@@ -37,13 +37,13 @@ struct ImageLoader* imageloader_ctor(SDL_Renderer* renderer)
 
 struct Texture imageloader_load(struct ImageLoader* self, const char* file)
 {
-	assert(self);
-	assert(file);
+	log_assert(self, "is NULL");
+	log_assert(file, "is NULL");
 
 	struct Texture image;
 	image.raw = IMG_LoadTexture(self->renderer, file);
 	if(!image.raw)
-		debug(IMG_GetError(), ERRORTYPE_APPLICATION);
+		log_error(IMG_GetError());
 	SDL_QueryTexture(
 		image.raw, 
 		NULL, 
@@ -57,7 +57,7 @@ struct Texture imageloader_load(struct ImageLoader* self, const char* file)
 
 void imageloader_dtor(struct ImageLoader* self)
 {
-	assert(self);
+	log_assert(self, "is NULL");
 	free(self);
 	IMG_Quit();
 }

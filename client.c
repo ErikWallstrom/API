@@ -1,6 +1,6 @@
 #include "client.h"
 #include "error.h"
-#include <assert.h>
+#include "log.h"
 
 struct Client* client_ctor(void* userdata)
 {
@@ -11,9 +11,9 @@ struct Client* client_ctor(void* userdata)
 		compile_version.minor != link_version->minor ||
 		compile_version.patch != link_version->patch)
 	{
-		printf(
-			"Warning: Program was compiled with SDL_image "
-			"version %i.%i.%i, but was linked with version %i.%i.%i\n",
+		log_warning(
+			"Program was compiled with SDL_image "
+			"version %i.%i.%i, but was linked with version %i.%i.%i",
 			compile_version.major,
 			compile_version.minor,
 			compile_version.patch,
@@ -24,11 +24,11 @@ struct Client* client_ctor(void* userdata)
 	}
 
 	if(SDLNet_Init())
-		debug(SDLNet_GetError(), ERRORTYPE_CRITICAL);
+		log_error(SDLNet_GetError());
 
 	struct Client* self = malloc(sizeof(struct Client));
 	if(!self)
-		debug("malloc", ERRORTYPE_MEMALLOC);
+		log_error("malloc failed");
 	
 	*self = (struct Client){0};
 	self->userdata = userdata;
@@ -43,28 +43,27 @@ int client_inittcp(
 	struct ClientTCPEventHandlers handlers
 )
 {
-	assert(self);
-	assert(!(self->type & CLIENTTYPE_TCP));
-	assert(port < (1 << 16));
-	assert(maxbufsize > 0);
+	log_assert(self, "is NULL");
+	log_assert(!(self->type & CLIENTTYPE_TCP), "is not TCP");
+	log_assert(port < (1 << 16), "too large");
+	log_assert(maxbufsize > 0, "invalid size");
 
 	if(SDLNet_ResolveHost(&self->tcpaddress, ip, port))
-		debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
+		log_error(SDLNet_GetError());
 
 	self->tcpsocket = SDLNet_TCP_Open(&self->tcpaddress);
 	if(!self->tcpsocket)
 	{
-		//debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
-		puts(SDLNet_GetError());
+		log_warning(SDLNet_GetError());
 		return 0;
 	}
 
 	self->tcpbuffer = malloc(maxbufsize);
 	if(!self->tcpbuffer)
-		debug("malloc", ERRORTYPE_MEMALLOC);
+		log_error("malloc failed");
 	self->tcpsocketset = SDLNet_AllocSocketSet(1);
 	if(!self->tcpsocketset)
-		debug("SDLNet_AllocSocketSet", ERRORTYPE_MEMALLOC);
+		log_error("SDLNet_AllocSocketSet failed");
 
 	SDLNet_TCP_AddSocket(self->tcpsocketset, self->tcpsocket);
 
@@ -84,13 +83,13 @@ int client_initudp(
 	ClientOnUDPData ondata
 )
 {
-	assert(self);
-	assert(!(self->type & CLIENTTYPE_UDP));
-	assert(port < (1 << 16));
-	assert(maxbufsize > 0);
+	log_assert(self, "is NULL");
+	log_assert(!(self->type & CLIENTTYPE_UDP), "is not UDP");
+	log_assert(port < (1 << 16), "too large");
+	log_assert(maxbufsize > 0, "invalid size");
 
 	if(SDLNet_ResolveHost(&self->udpaddress, ip, port))
-		debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
+		log_error(SDLNet_GetError());
 	
 	self->udpsocket = SDLNet_UDP_Open(0);
 	if(!self->udpsocket)
@@ -101,7 +100,7 @@ int client_initudp(
 	}
 	self->udppacket.data = malloc(maxbufsize);
 	if(!self->udppacket.data)
-		debug("malloc", ERRORTYPE_MEMALLOC);
+		log_error("malloc failed");
 
 	self->udppacket.maxlen = maxbufsize;
 	self->udppacket.len = maxbufsize;
@@ -116,11 +115,11 @@ int client_initudp(
 
 void client_sendtcp(struct Client* self, void* buffer, size_t bufsize)
 {
-	assert(self);
-	assert(buffer);
-	assert(bufsize);
-	assert(self->type & CLIENTTYPE_TCP);
-	assert((int)bufsize <= self->tcpmaxbufsize);
+	log_assert(self, "is NULL");
+	log_assert(buffer, "is NULL");
+	log_assert(bufsize, "is 0");
+	log_assert(self->type & CLIENTTYPE_TCP, "is not TCP");
+	log_assert((int)bufsize <= self->tcpmaxbufsize, "too large");
 
 	int sent = SDLNet_TCP_Send(self->tcpsocket, buffer, bufsize);
 	if(sent < (int)bufsize) /* not sent */
@@ -133,17 +132,17 @@ void client_sendtcp(struct Client* self, void* buffer, size_t bufsize)
 			);
 		}
 		/* Temporary */
-		debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
+		log_error(SDLNet_GetError());
 	}
 }
 
 void client_sendudp(struct Client* self, void* buffer, size_t bufsize)
 {
-	assert(self);
-	assert(buffer);
-	assert(bufsize);
-	assert(self->type & CLIENTTYPE_UDP);
-	assert((int)bufsize <= self->udppacket.maxlen);
+	log_assert(self, "is NULL");
+	log_assert(buffer, "is NULL");
+	log_assert(bufsize, "is 0");
+	log_assert(self->type & CLIENTTYPE_UDP, "is not UDP");
+	log_assert((int)bufsize <= self->udppacket.maxlen, "too large");
 
 	memmove(self->udppacket.data, buffer, bufsize);
 	self->udppacket.len = bufsize;
@@ -154,12 +153,12 @@ void client_sendudp(struct Client* self, void* buffer, size_t bufsize)
 	);
 
 	if(!sent)
-		puts("Failed to send udp data to destination");
+		log_warning("Failed to send udp data to destination");
 }
 
 void client_update(struct Client* self)
 {
-	assert(self);
+	log_assert(self, "is NULL");
 	if(self->type & CLIENTTYPE_TCP)
 	{
 		SDLNet_CheckSockets(self->tcpsocketset, 0);
@@ -179,8 +178,8 @@ void client_update(struct Client* self)
 						CLIENTDISCONNECT_ERROR,
 						self->userdata
 					);
-					puts("Lost connection to server");
-					debug(SDLNet_GetError(), ERRORTYPE_APPLICATION);
+					log_warning("Lost connection to server");
+					log_error(SDLNet_GetError());
 				}
 				else
 				{;
@@ -219,7 +218,7 @@ void client_update(struct Client* self)
 
 void client_dtor(struct Client* self)
 {
-	assert(self);
+	log_assert(self, "is NULL");
 	if(self->type & CLIENTTYPE_UDP)
 	{
 		free(self->udppacket.data);

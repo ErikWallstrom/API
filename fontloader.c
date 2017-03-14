@@ -1,10 +1,10 @@
 #include "fontloader.h"
 #include "error.h"
-#include <assert.h>
+#include "log.h"
 
 struct FontLoader* fontloader_ctor(SDL_Renderer* renderer)
 {
-	assert(renderer);
+	log_assert(renderer, "is NULL");
 
 	const SDL_version *link_version = TTF_Linked_Version();
 	SDL_version compile_version;
@@ -13,8 +13,8 @@ struct FontLoader* fontloader_ctor(SDL_Renderer* renderer)
 		compile_version.minor != link_version->minor ||
 		compile_version.patch != link_version->patch)
 	{
-		printf(
-			"Warning: Program was compiled with SDL_ttf "
+		log_warning(
+			"Program was compiled with SDL_ttf "
 			"version %i.%i.%i, but was linked with version %i.%i.%i\n",
 			compile_version.major,
 			compile_version.minor,
@@ -26,26 +26,26 @@ struct FontLoader* fontloader_ctor(SDL_Renderer* renderer)
 	}
 
 	if(TTF_Init())
-		debug(TTF_GetError(), ERRORTYPE_CRITICAL);
+		log_error(TTF_GetError());
 
 	struct FontLoader* self = malloc(sizeof(struct FontLoader));
 	if(!self)
-		debug("malloc", ERRORTYPE_MEMALLOC);
+		log_error("malloc failed");
 
 	self->renderer = renderer;
-	self->fonts	= vec_ctor(sizeof(struct Font), 0);
+	self->fonts	= vec_ctor(struct Font, 0);
 	return self;
 }
 
 FontID fontloader_load(struct FontLoader* self, const char* file, size_t size)
 {
-	assert(self);
-	assert(file);
-	assert(size);
+	log_assert(self, "is NULL");
+	log_assert(file, "is NULL");
+	log_assert(size, "is 0");
 
 	TTF_Font* font = TTF_OpenFont(file, size);
 	if(!font)
-		debug(TTF_GetError(), ERRORTYPE_APPLICATION);
+		log_error(TTF_GetError());
 
 	vec_pushback(&self->fonts, (struct Font){
 		.raw = font,
@@ -61,7 +61,7 @@ struct Texture fontloader_render(
 	enum FontQuality quality
 )
 {
-	assert(self);
+	log_assert(self, "is NULL");
 	SDL_Surface* surface = NULL;
 	switch(quality)
 	{
@@ -81,7 +81,7 @@ struct Texture fontloader_render(
 		);
 		break;
 	default:
-		debug("Invalid font quality", ERRORTYPE_APPLICATION);
+		log_error("Invalid font quality");
 	}
 
 	struct Texture texture;
@@ -90,7 +90,7 @@ struct Texture fontloader_render(
 		surface
 	);
 	if(!texture.raw)
-		debug(SDL_GetError(), ERRORTYPE_APPLICATION);
+		log_error(SDL_GetError());
 
 	SDL_FreeSurface(surface);
 	SDL_QueryTexture(
@@ -106,7 +106,7 @@ struct Texture fontloader_render(
 
 void fontloader_dtor(struct FontLoader* self)
 {
-	assert(self);
+	log_assert(self, "is NULL");
 	for(size_t i = 0; i < vec_getsize(&self->fonts); i++)
 		TTF_CloseFont(self->fonts[i].raw);
 

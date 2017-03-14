@@ -1,6 +1,6 @@
 #include "window.h"
 #include "error.h"
-#include <assert.h>
+#include "log.h"
 #include <string.h> //Only for strlen on windows...
 
 struct Window* window_ctor(
@@ -10,13 +10,13 @@ struct Window* window_ctor(
 	enum WindowFlags flags
 )
 {
-	assert(title);
-	assert(width > 0);
-	assert(height > 0);
+	log_assert(title, "is NULL");
+	log_assert(width > 0, "invalid");
+	log_assert(height > 0, "invalid");
 
 	struct Window* self = malloc(sizeof(struct Window));
 	if(!self)
-		debug("malloc", ERRORTYPE_MEMALLOC);
+		log_error("malloc failed");
 
 	self->raw = SDL_CreateWindow(
 		title,
@@ -29,14 +29,14 @@ struct Window* window_ctor(
 			SDL_WINDOW_SHOWN
 	);
 	if(!self->raw)
-		debug(SDL_GetError(), ERRORTYPE_CRITICAL);
+		log_error(SDL_GetError());
 
 	self->vsync = 0;
 	if(flags & WINDOW_CONTEXT)
 	{
 		self->context = SDL_GL_CreateContext(self->raw);
 		if(!self->context)
-			debug(SDL_GetError(), ERRORTYPE_CRITICAL);
+			log_error(SDL_GetError());
 		if(flags & WINDOW_VSYNC)
 		{
 			SDL_GL_SetSwapInterval(1);
@@ -58,7 +58,7 @@ struct Window* window_ctor(
 			renderflags
 		);
 		if(!self->renderer)
-			debug(SDL_GetError(), ERRORTYPE_CRITICAL);
+			log_error(SDL_GetError());
 	}
 		
 	self->fps = 0;
@@ -76,19 +76,21 @@ struct Window* window_ctor(
 	);
 
 	size_t title_len = strlen(title);
-	self->title = vec_ctor(1, title_len + 1);
-	vec_set(&self->title, title, title_len);
-	self->events = vec_ctor(sizeof(SDL_Event), 0);
+	self->title = vec_ctor(char, title_len + 1);
+	vec_expand(&self->title, 0, title_len + 1);
+	strcpy(self->title, title);
+	self->events = vec_ctor(SDL_Event, 0);
 	return self;
 }
 
 int window_update(struct Window* self)
 {
-	assert(self);
+	log_assert(self, "is NULL");
 	SDL_Event event;
 	if(self->read)
 	{
-		vec_set(&self->events, NULL, 0);
+		//vec_set(&self->events, NULL, 0);
+		vec_collapse(&self->events, 0, vec_getsize(&self->events));
 		self->read = 0;
 	}
 
@@ -142,13 +144,13 @@ int window_update(struct Window* self)
 	/*
 	if(self->hidden) //Temporary fix vsync minimize problem
 		SDL_Delay(16);
-		*/
+	*/
 	return 1;
 }
 
 void window_dtor(struct Window* self)
 {
-	assert(self);
+	log_assert(self, "is NULL");
 	if(self->flags == WINDOW_CONTEXT)
 		SDL_GL_DeleteContext(self->context);
 	else

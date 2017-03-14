@@ -1,12 +1,7 @@
 #include "log.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
-void log_init(FILE* dest)
-{
-	log_assert(0, "This function is not available");
-	(void)dest;
-}
 
 void log_assert_(
 	const char* statement, 
