@@ -2,31 +2,29 @@
 #define VEC_H
 
 #include <stddef.h>
-#define Vec(T) T *
 
-#define vec_insert(vec, pos, ...) \
-	vec_expand(vec, pos, 1), (*(vec))[pos] = __VA_ARGS__
-#define vec_push(vec, ...) vec_insert(vec, 0, __VA_ARGS__)
-#define vec_pushback(vec, ...) \
-	vec_expand( \
-		vec, vec_getsize(vec), 1 \
-	), \
-	(*(vec))[vec_getsize(vec) - 1] = __VA_ARGS__
-#define vec_pop(vec) vec_collapse(vec, 0, 1)
-#define vec_popback(vec) vec_collapse(vec, vec_getsize(vec) - 1, 1)
+#define Vec(T) T*
+#define vec_validp_(p) (((void)(**p)), (p))
 
+#define vec_ctor(T, n) (T*)vec_ctor_(sizeof(T), (n))
+#define vec_dtor(v) vec_dtor_(vec_validp_(v))
+#define vec_getsize(v) vec_getsize_(vec_validp_(v))
+#define vec_expand(v, p, e) vec_expand_(vec_validp_(v), (p), (e))
+#define vec_collapse(v, p, e) vec_collapse_(vec_validp_(v), (p), (e))
+#define vec_insert(v, p, ...) \
+	vec_expand((v), (p), 1), (*(v))[p] = __VA_ARGS__
+#define vec_remove(v, p) vec_collapse((v), p, 1)
+#define vec_push(v, ...) vec_insert((v), 0, __VA_ARGS__)
+#define vec_pushback(v, ...) \
+	vec_expand((v), vec_getsize_(v), 1), \
+	(*(v))[vec_getsize_(v) - 1] = __VA_ARGS__
+#define vec_pop(v) vec_collapse((v), 0, 1)
+#define vec_popback(v) vec_collapse((v), vec_getsize_(v) - 1, 1)
 
-Vec(void) vec_ctor(size_t element_size, size_t elements);
-Vec(void) vec_copy(Vec(void) vec);
-void vec_dtor(Vec(void) vec);
-size_t vec_getsize(Vec(void) vec);
-
-void vec_expand(Vec(void) vec, size_t pos, size_t elements);
-void vec_collapse(Vec(void) vec, size_t pos, size_t elements);
-
-void vec_set(Vec(void) vec, void* data, size_t elements);
-void vec_append(Vec(void) vec, void* data, size_t elements);
-void vec_prepend(Vec(void) vec, void* data, size_t elements);
+Vec(void) vec_ctor_(size_t elementsize, size_t elements);
+void vec_dtor_(Vec(void) vec);
+size_t vec_getsize_(Vec(void) vec);
+void vec_expand_(Vec(void) vec, size_t pos, size_t elements);
+void vec_collapse_(Vec(void) vec, size_t pos, size_t elements);
 
 #endif
-

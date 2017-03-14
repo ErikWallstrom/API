@@ -1,2 +1,5 @@
-build:
-	gcc ./game.c ./window.c ./error.c ./imageloader.c ./vec.c ./server.c ./fontloader.c ./texturehandler.c ./client.c -Wall -Wextra -Wshadow -shared -fPIC -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -o libAPI.so 
+debug:
+	gcc ./*.c -ggdb3 -Og -Wall -Wextra -Wshadow -shared -fPIC -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -lSDL2_mixer -o libAPI.so
+
+release:
+	gcc ./*.c -Wall -Wextra -Wshadow -march=native -O2 -shared -fPIC -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_net -o libAPI.so 
