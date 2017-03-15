@@ -1,7 +1,50 @@
 #include "game.h"
 #include "log.h"
-#include <time.h>
 #include <inttypes.h>
+
+#ifdef __WIN32__
+#include <Windows.h>
+#define BILLION                             (1E9)
+#define TIME_UTC 1
+
+struct timespec { long tv_sec; long tv_nsec; }; 
+int clock_gettime(int dummy, struct timespec *ct)
+{
+	(void)dummy;
+	static BOOL g_first_time = 1;
+	static LARGE_INTEGER g_counts_per_sec;
+	LARGE_INTEGER count;
+
+	if (g_first_time)
+	{
+		g_first_time = 0;
+
+		if (0 == QueryPerformanceFrequency(&g_counts_per_sec))
+		{
+		    g_counts_per_sec.QuadPart = 0;
+		}
+	}
+
+	if ((NULL == ct) || (g_counts_per_sec.QuadPart <= 0) ||
+	    (0 == QueryPerformanceCounter(&count)))
+	{
+		return -1;
+	}
+
+	ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
+	ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / g_counts_per_sec.QuadPart;
+
+	return 0;
+}
+
+void timespec_get(struct timespec* ts, int dummy)
+{
+	clock_gettime(dummy, ts);
+}
+
+#else
+#include <time.h>
+#endif
 
 struct Game* game_ctor(struct Game* self, int ticks, void* userdata)
 {
