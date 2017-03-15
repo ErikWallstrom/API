@@ -50,7 +50,7 @@ struct Client
 	int type;
 };
 
-struct Client* client_ctor(void* userdata);
+struct Client* client_ctor(struct Client* self, void* userdata);
 int client_inittcp(
 	struct Client* self, 
 	const char* ip,

@@ -24,7 +24,10 @@ struct FontLoader
 	Vec(struct Font) fonts;
 };
 
-struct FontLoader* fontloader_ctor(SDL_Renderer* renderer);
+struct FontLoader* fontloader_ctor(
+	struct FontLoader* self, 
+	SDL_Renderer* renderer
+);
 FontID fontloader_load(struct FontLoader* self, const char* file, size_t size);
 struct Texture fontloader_render(
 	struct FontLoader* self, 

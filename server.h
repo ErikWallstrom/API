@@ -70,7 +70,7 @@ struct Server
 	int type;
 };
 
-struct Server* server_ctor(void* userdata);
+struct Server* server_ctor(struct Server* self, void* userdata);
 int server_inittcp(
 	struct Server* self, 
 	int port,

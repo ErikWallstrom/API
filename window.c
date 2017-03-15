@@ -4,19 +4,45 @@
 #include <stdlib.h>
 
 struct Window* window_ctor(
+	struct Window* self,
 	char* title, 
 	int width, 
 	int height, 
 	enum WindowFlags flags
 )
 {
+	log_assert(self, "is NULL");
 	log_assert(title, "is NULL");
 	log_assert(width > 0, "invalid");
 	log_assert(height > 0, "invalid");
+	log_assert(
+		flags & WINDOW_CONTEXT || flags & WINDOW_RENDERER, 
+		"invalid flag"
+	);
 
-	struct Window* self = malloc(sizeof(struct Window));
-	if(!self)
-		log_error("malloc failed");
+	SDL_version compile_version;
+	SDL_version link_version;
+
+	SDL_VERSION(&compile_version);
+	SDL_GetVersion(&link_version);
+	if(compile_version.major != link_version.major ||
+		compile_version.minor != link_version.minor ||
+		compile_version.patch != link_version.patch)
+	{
+		log_error(
+			"Program was compiled with SDL version %i.%i.%i,"
+			" but was linked with version %i.%i.%i\n",
+			compile_version.major,
+			compile_version.minor,
+			compile_version.patch,
+			link_version.major,
+			link_version.minor,
+			link_version.patch
+		);
+	}
+
+	if(SDL_Init(SDL_INIT_VIDEO))
+		log_error(SDL_GetError());
 
 	self->raw = SDL_CreateWindow(
 		title,
@@ -31,7 +57,6 @@ struct Window* window_ctor(
 	if(!self->raw)
 		log_error(SDL_GetError());
 
-	self->vsync = 0;
 	if(flags & WINDOW_CONTEXT)
 	{
 		self->context = SDL_GL_CreateContext(self->raw);
@@ -40,7 +65,6 @@ struct Window* window_ctor(
 		if(flags & WINDOW_VSYNC)
 		{
 			SDL_GL_SetSwapInterval(1);
-			self->vsync = 1;
 		}
 	}
 	else if(flags & WINDOW_RENDERER)
@@ -49,7 +73,6 @@ struct Window* window_ctor(
 			SDL_RENDERER_TARGETTEXTURE;
 		if(flags & WINDOW_VSYNC)
 		{
-			self->vsync = 1;
 			renderflags |= SDL_RENDERER_PRESENTVSYNC;
 		}
 		self->renderer = SDL_CreateRenderer(
@@ -63,9 +86,6 @@ struct Window* window_ctor(
 		
 	self->fps = 0;
 	self->read = 0;
-	self->frames = 0;
-	self->hidden = 0;
-	self->oldticks = 0;
 	self->flags = flags;
 	self->width = width;
 	self->height = height;
@@ -86,7 +106,6 @@ int window_update(struct Window* self)
 	SDL_Event event;
 	if(self->read)
 	{
-		//vec_set(&self->events, NULL, 0);
 		vec_collapse(&self->events, 0, vec_getsize(&self->events));
 		self->read = 0;
 	}
@@ -98,11 +117,6 @@ int window_update(struct Window* self)
 		case SDL_QUIT:
 			return 0;
 			break;
-		case SDL_WINDOWEVENT:
-			if(event.window.event == SDL_WINDOWEVENT_HIDDEN)
-				self->hidden = 1;
-			else if(event.window.event == SDL_WINDOWEVENT_HIDDEN)
-				self->hidden = 0;
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
 		case SDL_MOUSEBUTTONDOWN:
@@ -130,18 +144,15 @@ int window_update(struct Window* self)
 		SDL_RenderClear(self->renderer);
 	}
 
-	if(SDL_GetTicks() / 1000 > self->oldticks)
+	static Uint32 oldticks = 0, frames = 0;
+	if(SDL_GetTicks() / 1000 > oldticks)
 	{
-		self->oldticks = SDL_GetTicks() / 1000;
-		self->fps = self->frames;
-		self->frames = 0;
+		oldticks = SDL_GetTicks() / 1000;
+		self->fps = frames;
+		frames = 0;
 	}
-	self->frames++;
 
-	/*
-	if(self->hidden) //Temporary fix vsync minimize problem
-		SDL_Delay(16);
-	*/
+	frames++;
 	return 1;
 }
 

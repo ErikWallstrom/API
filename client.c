@@ -3,8 +3,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct Client* client_ctor(void* userdata)
+struct Client* client_ctor(struct Client* self, void* userdata)
 {
+	log_assert(self, "is NULL");
+
 	const SDL_version *link_version = SDLNet_Linked_Version();
 	SDL_version compile_version;
 	SDL_NET_VERSION(&compile_version);
@@ -27,10 +29,6 @@ struct Client* client_ctor(void* userdata)
 	if(SDLNet_Init())
 		log_error(SDLNet_GetError());
 
-	struct Client* self = malloc(sizeof(struct Client));
-	if(!self)
-		log_error("malloc failed");
-	
 	*self = (struct Client){0};
 	self->userdata = userdata;
 	return self;
@@ -232,7 +230,5 @@ void client_dtor(struct Client* self)
 		SDLNet_TCP_Close(self->tcpsocket);
 		SDLNet_FreeSocketSet(self->tcpsocketset);
 	}
-
-	free(self);
 }
 

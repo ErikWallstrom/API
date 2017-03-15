@@ -1,47 +1,16 @@
 #include "game.h"
 #include "log.h"
 #include <time.h>
-#include <stdlib.h>
+#include <inttypes.h>
 
-struct Game* game_ctor(struct GameLoop loop, void* userdata)
+struct Game* game_ctor(struct Game* self, int ticks, void* userdata)
 {
-	log_assert(loop.ticks > 0, "is 0");
-	log_assert(loop.fpslimit >= FPSLIMIT_UNLIMITED, "invalid fpslimit");
-
-	SDL_version compile_version;
-	SDL_version link_version;
-
-	SDL_VERSION(&compile_version);
-	SDL_GetVersion(&link_version);
-	if(compile_version.major != link_version.major ||
-		compile_version.minor != link_version.minor ||
-		compile_version.patch != link_version.patch)
-	{
-		log_error(
-			"Program was compiled with SDL version %i.%i.%i,"
-			" but was linked with version %i.%i.%i\n",
-			compile_version.major,
-			compile_version.minor,
-			compile_version.patch,
-			link_version.major,
-			link_version.minor,
-			link_version.patch
-		);
-	}
-
-	struct Game* self = malloc(sizeof(struct Game));
-	if(!self)
-		log_error("malloc failed");
-
-	if(SDL_Init(SDL_INIT_VIDEO))
-		log_error(SDL_GetError());
-
-	srand(time(NULL));
+	log_assert(self, "is NULL");
+	log_assert(ticks > 0, "is invalid");
 
 	self->scenes = vec_ctor(struct Scene*, 0);
 	self->userdata = userdata;
-	self->window = NULL;
-	self->loop = loop;
+	self->ticks = ticks;
 	self->selectedscene = 0;
 	self->done = 0;
 	return self;
@@ -55,26 +24,39 @@ void game_add(struct Game* self, struct Scene* scene)
 	vec_pushback(&self->scenes, scene);
 }
 
+int64_t game_getperformancefrequency(void)
+{
+	return 1000000000;
+}
+
+int64_t game_getperformancecounter(void)
+{
+	struct timespec ts;
+	timespec_get(&ts, TIME_UTC);
+
+	uint64_t ticks = ts.tv_sec;
+	ticks *= game_getperformancefrequency();
+	ticks += ts.tv_nsec;
+
+	return ticks;
+}
+
 void game_start(struct Game* self)
 {
 	log_assert(self, "is NULL");
 
-	double oldtime = SDL_GetPerformanceCounter() * 1000.0;
+	double oldtime = game_getperformancecounter() * 1000.0;
 	double lag = 0.0;
-	double sleeptime = 0.0;
-	double sleeptick = SDL_GetTicks();
 
 	while(!self->done)
 	{
-		double msperupdate = 1000.0 / (double)self->loop.ticks;
-		double curtime = SDL_GetPerformanceCounter() * 1000.0;
+		double msperupdate = 1000.0 / self->ticks;
+		double curtime = game_getperformancecounter() * 1000.0;
 		double delta = (curtime - oldtime) /
-			SDL_GetPerformanceFrequency();
+			game_getperformancefrequency();
 		oldtime = curtime;
 		lag += delta;
 
-		if(self->window)
-			self->done = !window_update(self->window);
 		if(vec_getsize(&self->scenes))
 		{
 			struct Scene* scene = self->scenes[self->selectedscene];
@@ -84,11 +66,9 @@ void game_start(struct Game* self)
 				{
 					scene->update(scene, self, self->userdata);
 					lag -= msperupdate;
-
-					if(self->window)
-						self->window->read = 1;
 				}
 			}
+
 			if(scene->render)
 			{
 				double interpolation = lag / msperupdate;
@@ -119,15 +99,6 @@ void game_start(struct Game* self)
 			default:;
 			}
 		}
-
-		if(self->loop.fpslimit > 0)
-		{
-			sleeptick += 1000.0 / self->loop.fpslimit;
-			sleeptime = sleeptick - SDL_GetTicks();
-
-			if(sleeptime >= 0)
-				SDL_Delay(sleeptime);
-		}
 	}
 }
 
@@ -135,7 +106,4 @@ void game_dtor(struct Game* self)
 {
 	log_assert(self, "is NULL");
 	vec_dtor(&self->scenes);
-
-	free(self);
-	SDL_Quit();
 }

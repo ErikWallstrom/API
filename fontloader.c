@@ -1,9 +1,12 @@
 #include "fontloader.h"
 #include "log.h"
-#include <stdlib.h>
 
-struct FontLoader* fontloader_ctor(SDL_Renderer* renderer)
+struct FontLoader* fontloader_ctor(
+	struct FontLoader* self, 
+	SDL_Renderer* renderer
+)
 {
+	log_assert(self, "is NULL");
 	log_assert(renderer, "is NULL");
 
 	const SDL_version *link_version = TTF_Linked_Version();
@@ -27,10 +30,6 @@ struct FontLoader* fontloader_ctor(SDL_Renderer* renderer)
 
 	if(TTF_Init())
 		log_error(TTF_GetError());
-
-	struct FontLoader* self = malloc(sizeof(struct FontLoader));
-	if(!self)
-		log_error("malloc failed");
 
 	self->renderer = renderer;
 	self->fonts	= vec_ctor(struct Font, 0);
@@ -111,6 +110,5 @@ void fontloader_dtor(struct FontLoader* self)
 		TTF_CloseFont(self->fonts[i].raw);
 
 	vec_dtor(&self->fonts);
-	free(self);
 	TTF_Quit();
 }

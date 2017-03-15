@@ -1,9 +1,12 @@
 #include "imageloader.h"
 #include "log.h"
-#include <stdlib.h>
 
-struct ImageLoader* imageloader_ctor(SDL_Renderer* renderer)
+struct ImageLoader* imageloader_ctor(
+	struct ImageLoader* self, 
+	SDL_Renderer* renderer
+)
 {
+	log_assert(self, "is NULL");
 	log_assert(renderer, "is NULL");
 
 	const SDL_version *link_version = IMG_Linked_Version();
@@ -27,9 +30,6 @@ struct ImageLoader* imageloader_ctor(SDL_Renderer* renderer)
 
 	if(!IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG))
 		log_error(IMG_GetError());
-	struct ImageLoader* self = malloc(sizeof(struct ImageLoader));
-	if(!self)
-		log_error("malloc failed");
 
 	self->renderer = renderer;
 	return self;
@@ -58,6 +58,5 @@ struct Texture imageloader_load(struct ImageLoader* self, const char* file)
 void imageloader_dtor(struct ImageLoader* self)
 {
 	log_assert(self, "is NULL");
-	free(self);
 	IMG_Quit();
 }

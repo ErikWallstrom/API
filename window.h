@@ -27,14 +27,12 @@ struct Window
 	enum WindowFlags flags;
 	int mousex, mousey;
 	int width, height;
-	int vsync, fps;
-	int hidden, read;
-
-	/* Only used internally */
-	Uint32 oldticks, frames;
+	int fps;
+	int read; //Set to 1 after events has been handled
 };
 
 struct Window* window_ctor(
+	struct Window* self,
 	char* title, 
 	int width, 
 	int height, 
