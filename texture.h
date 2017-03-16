@@ -9,4 +9,10 @@ struct Texture
 	int width, height;
 };
 
+struct Texture* texture_copy(
+	struct Texture* dest, 
+	struct Texture* from, 
+	SDL_Renderer* renderer
+);
+
 #endif

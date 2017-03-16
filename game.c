@@ -32,7 +32,8 @@ int clock_gettime(int dummy, struct timespec *ct)
 	}
 
 	ct->tv_sec = count.QuadPart / g_counts_per_sec.QuadPart;
-	ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / g_counts_per_sec.QuadPart;
+	ct->tv_nsec = ((count.QuadPart % g_counts_per_sec.QuadPart) * BILLION) / 
+		g_counts_per_sec.QuadPart;
 
 	return 0;
 }

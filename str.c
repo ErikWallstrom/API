@@ -64,7 +64,7 @@ void str_append(Str* s, const char* s2)
 	log_assert(s, "s is NULL");
 	log_assert(s2, "s is NULL");
 
-	size_t oldsize = vec_getsize(s) - 1;
+	size_t oldsize = str_getlen(s);
 	vec_expand(s, oldsize, strlen(s2));
 	strcpy(*s + oldsize, s2);
 }
@@ -76,6 +76,18 @@ void str_prepend(Str* s, const char* s2)
 
 	vec_expand(s, 0, strlen(s2));
 	memcpy(*s, s2 ,strlen(s2));
+}
+
+void str_appendwithchar(Str* s, char c)
+{
+	log_assert(s, "s is NULL");
+	vec_insert(s, str_getlen(s) - 1, c);
+}
+
+void str_prependwithchar(Str* s, char c)
+{
+	log_assert(s, "s is NULL");
+	vec_push(s, c);
 }
 
 void str_dtor(Str* s)

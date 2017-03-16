@@ -168,5 +168,6 @@ void window_dtor(struct Window* self)
 	vec_dtor(&self->events);
 	SDL_DestroyWindow(self->raw);
 	free(self);
+	SDL_Quit();
 }
 
