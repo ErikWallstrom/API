@@ -1,7 +1,6 @@
 #include "window.h"
 #include "log.h"
 #include <string.h>
-#include <stdlib.h>
 
 struct Window* window_ctor(
 	struct Window* self,
@@ -167,7 +166,6 @@ void window_dtor(struct Window* self)
 	str_dtor(&self->title);
 	vec_dtor(&self->events);
 	SDL_DestroyWindow(self->raw);
-	free(self);
 	SDL_Quit();
 }
 

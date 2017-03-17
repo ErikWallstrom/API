@@ -108,7 +108,7 @@ void game_start(struct Game* self)
 			{
 				while(lag >= msperupdate)
 				{
-					scene->update(scene, self, self->userdata);
+					scene->update(scene, self);
 					lag -= msperupdate;
 				}
 			}
@@ -116,11 +116,7 @@ void game_start(struct Game* self)
 			if(scene->render)
 			{
 				double interpolation = lag / msperupdate;
-				scene->render(
-					self,
-					interpolation,
-					self->userdata
-				);
+				scene->render(scene, self, interpolation);
 			}
 
 			switch(scene->change)

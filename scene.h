@@ -7,14 +7,13 @@ struct Scene;
 typedef struct SDL_Renderer SDL_Renderer;
 typedef void(*SceneUpdate)(
 	struct Scene* scene, 
-	struct Game* window, 
-	void* userdata
+	struct Game* game
 );
 
 typedef void(*SceneRender)(
+	struct Scene* scene, 
 	struct Game* game,
-	double interpolation, 
-	void* userdata
+	double interpolation
 );
 
 enum SceneChange
@@ -28,8 +27,16 @@ struct Scene
 {
 	SceneUpdate update;
 	SceneRender render;
+	void* userdata;
 	enum SceneChange change;
 };
+
+struct Scene* scene_ctor(
+	struct Scene* self, 
+	SceneUpdate update,
+	SceneRender render, 
+	void* userdata
+);
 
 #endif
 
