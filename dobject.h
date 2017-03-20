@@ -20,7 +20,7 @@ enum DObjectRegPoint
 struct DObject;
 struct Scene;
 typedef void(*DObjectBehavior)(struct DObject*, struct Scene*, void*);
-typedef void(*DObjectRender)( struct DObject*, SDL_Renderer*, double);
+typedef void(*DObjectRender)(struct DObject*, SDL_Renderer*, double);
 
 struct DObjectPos
 {
@@ -62,6 +62,12 @@ void dobject_defaultrender(
 	SDL_Renderer* renderer,
 	double interpolation
 );
+int dobject_intersects(struct DObject* self, struct DObject* dobject);
+int dobject_intersectspoint(struct DObject* self, double x, double y);
+int dobject_hittestleft(struct DObject* self, struct DObject* dobject);
+int dobject_hittestright(struct DObject* self, struct DObject* dobject);
+int dobject_hittesttop(struct DObject* self, struct DObject* dobject);
+int dobject_hittestbottom(struct DObject* self, struct DObject* dobject);
 void dobject_dtor(struct DObject* self);
 
 #endif

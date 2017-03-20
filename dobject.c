@@ -142,6 +142,170 @@ void dobject_defaultrender(
 	);
 }
 
+int intersects_(double amin, double amax, double bmin, double bmax)
+{
+	if(bmin > amin)
+		amin = bmin;
+	if(bmax < amax)
+		amax = bmax;
+	if(amax <= amin)
+		return 0;
+
+	return 1;
+}
+
+int dobject_intersects(struct DObject* self, struct DObject* dobject)
+{
+	log_assert(self, "is NULL");
+	log_assert(dobject, "is NULL");
+
+	struct DObjectPos selfpos = dobject_getrealpos(self);
+	struct DObjectPos dobjpos = dobject_getrealpos(dobject);
+
+	int intersectx = intersects_(
+		selfpos.x, 
+		selfpos.x + self->w, 
+		dobjpos.x, 
+		dobjpos.x + dobject->w
+	);
+
+	if(!intersectx)
+		return 0;
+
+	int intersecty = intersects_(
+		selfpos.y, 
+		selfpos.y + self->h, 
+		dobjpos.y, 
+		dobjpos.y + dobject->h
+	);
+
+	if(!intersecty)
+		return 0;
+
+	return 1;
+}
+
+int dobject_intersectspoint(struct DObject* self, double x, double y)
+{
+	log_assert(self, "is NULL");
+	struct DObjectPos pos = dobject_getrealpos(self);
+	if((x >= pos.x) && (x <= (pos.x + self->w - 1)) && 
+		(y >= pos.y) && (y <= (pos.y + self->h - 1)))
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+int dobject_hittestleft(struct DObject* self, struct DObject* dobject)
+{
+	log_assert(self, "is NULL");
+	log_assert(dobject, "is NULL");
+
+	struct DObjectPos selfpos = dobject_getrealpos(self);
+	struct DObjectPos dobjpos = dobject_getrealpos(dobject);
+
+	if(selfpos.x < dobjpos.x + dobject->w)
+		return 0;
+
+	if(selfpos.x + self->changex >= dobjpos.x + dobject->w + dobject->changex)
+		return 0;
+
+	int intersecty = intersects_(
+		selfpos.y + self->changey, 
+		selfpos.y + self->h + self->changey, 
+		dobjpos.y + dobject->changey, 
+		dobjpos.y + dobject->h + dobject->changey
+	);
+
+	if(!intersecty)
+		return 0;
+
+	return 1;
+}
+
+int dobject_hittestright(struct DObject* self, struct DObject* dobject)
+{
+	log_assert(self, "is NULL");
+	log_assert(dobject, "is NULL");
+
+	struct DObjectPos selfpos = dobject_getrealpos(self);
+	struct DObjectPos dobjpos = dobject_getrealpos(dobject);
+
+	if(selfpos.x + self->w > dobjpos.x)
+		return 0;
+
+	if(selfpos.x + self->w + self->changex <= dobjpos.x + dobject->changex)
+		return 0;
+
+	int intersecty = intersects_(
+		selfpos.y + self->changey, 
+		selfpos.y + self->h + self->changey, 
+		dobjpos.y + dobject->changey, 
+		dobjpos.y + dobject->h + dobject->changey
+	);
+
+	if(!intersecty)
+		return 0;
+
+	return 1;
+}
+
+int dobject_hittesttop(struct DObject* self, struct DObject* dobject)
+{
+	log_assert(self, "is NULL");
+	log_assert(dobject, "is NULL");
+
+	struct DObjectPos selfpos = dobject_getrealpos(self);
+	struct DObjectPos dobjpos = dobject_getrealpos(dobject);
+
+	if(selfpos.y < dobjpos.y + dobject->h)
+		return 0;
+
+	if(selfpos.y + self->changey >= dobjpos.y + dobject->h + dobject->changey)
+		return 0;
+
+	int intersectx = intersects_(
+		selfpos.x + self->changex, 
+		selfpos.x + self->w + self->changex, 
+		dobjpos.x + dobject->changex,  
+		dobjpos.x + dobject->w + dobject->changex
+	);
+
+	if(!intersectx)
+		return 0;
+
+	return 1;
+}
+
+int dobject_hittestbottom(struct DObject* self, struct DObject* dobject)
+{
+	log_assert(self, "is NULL");
+	log_assert(dobject, "is NULL");
+
+	struct DObjectPos selfpos = dobject_getrealpos(self);
+	struct DObjectPos dobjpos = dobject_getrealpos(dobject);
+
+	if(selfpos.y + self->h > dobjpos.y)
+		return 0;
+
+	if(selfpos.y + self->h + self->changey <= dobjpos.y + dobject->changey)
+		return 0;
+
+	int intersectx = intersects_(
+		selfpos.x + self->changex, 
+		selfpos.x + self->w + self->changex, 
+		dobjpos.x + dobject->changex,  
+		dobjpos.x + dobject->w + dobject->changex
+	);
+
+	if(!intersectx)
+		return 0;
+
+	return 1;
+}
+
 void dobject_dtor(struct DObject* self)
 {
 	log_assert(self, "is NULL");

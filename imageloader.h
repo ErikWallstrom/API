@@ -13,7 +13,11 @@ struct ImageLoader* imageloader_ctor(
 	struct ImageLoader* self, 
 	SDL_Renderer* renderer
 );
-struct Texture imageloader_load(struct ImageLoader* self, const char* file);
+void imageloader_load(
+	struct ImageLoader* self, 
+	struct Texture* image, 
+	const char* file
+);
 void imageloader_dtor(struct ImageLoader* self);
 
 #endif

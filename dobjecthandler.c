@@ -26,7 +26,8 @@ DObjectID dobjecthandler_add(
 	log_assert(self, "is NULL");
 	log_assert(dobject, "is NULL");
 
-	return 1;
+	vec_pushback(&self->dobjects, dobject);
+	return vec_getsize(&self->dobjects);
 }
 
 void dobjecthandler_update(struct DObjectHandler* self)

@@ -35,24 +35,26 @@ struct ImageLoader* imageloader_ctor(
 	return self;
 }
 
-struct Texture imageloader_load(struct ImageLoader* self, const char* file)
+void imageloader_load(
+	struct ImageLoader* self, 
+	struct Texture* image, 
+	const char* file
+)
 {
 	log_assert(self, "is NULL");
+	log_assert(image, "is NULL");
 	log_assert(file, "is NULL");
 
-	struct Texture image;
-	image.raw = IMG_LoadTexture(self->renderer, file);
-	if(!image.raw)
+	image->raw = IMG_LoadTexture(self->renderer, file);
+	if(!image->raw)
 		log_error(IMG_GetError());
 	SDL_QueryTexture(
-		image.raw, 
+		image->raw, 
 		NULL, 
 		NULL, 
-		&image.width, 
-		&image.height
+		&image->width, 
+		&image->height
 	);
-
-	return image;
 }
 
 void imageloader_dtor(struct ImageLoader* self)
