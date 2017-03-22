@@ -29,8 +29,9 @@ struct FontLoader* fontloader_ctor(
 	SDL_Renderer* renderer
 );
 FontID fontloader_load(struct FontLoader* self, const char* file, size_t size);
-struct Texture fontloader_render(
+void fontloader_render(
 	struct FontLoader* self, 
+	struct Texture* dest,
 	const char* text,
 	FontID font, 
 	enum FontQuality quality

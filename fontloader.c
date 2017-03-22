@@ -53,14 +53,24 @@ FontID fontloader_load(struct FontLoader* self, const char* file, size_t size)
 	return vec_getsize(&self->fonts) - 1;
 }
 
-struct Texture fontloader_render(
+void fontloader_render(
 	struct FontLoader* self, 
+	struct Texture* texture,
 	const char* text,
 	FontID font, 
 	enum FontQuality quality
 )
 {
 	log_assert(self, "is NULL");
+	log_assert(texture, "is NULL");
+	log_assert(text, "is NULL");
+	log_assert(font < vec_getsize(&self->fonts), "invalid FontID");
+	log_assert(
+		quality == FONTQUALITY_LOW || 
+			quality == FONTQUALITY_HIGH, 
+		"is NULL"
+	);
+
 	SDL_Surface* surface = NULL;
 	switch(quality)
 	{
@@ -83,24 +93,21 @@ struct Texture fontloader_render(
 		log_error("Invalid font quality");
 	}
 
-	struct Texture texture;
-	texture.raw = SDL_CreateTextureFromSurface(
+	texture->raw = SDL_CreateTextureFromSurface(
 		self->renderer,
 		surface
 	);
-	if(!texture.raw)
+	if(!texture->raw)
 		log_error(SDL_GetError());
 
 	SDL_FreeSurface(surface);
 	SDL_QueryTexture(
-		texture.raw, 
+		texture->raw, 
 		NULL, 
 		NULL, 
-		&texture.width,
-		&texture.height
+		&texture->width,
+		&texture->height
 	);
-
-	return texture;
 }
 
 void fontloader_dtor(struct FontLoader* self)

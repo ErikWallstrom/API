@@ -30,11 +30,32 @@ DObjectID dobjecthandler_add(
 	return vec_getsize(&self->dobjects);
 }
 
+void dobjecthandler_remove(
+	struct DObjectHandler* self, 
+	struct DObject* dobject
+)
+{
+	log_assert(self, "is NULL");
+	log_assert(dobject, "is NULL");
+	
+	for(size_t i = 0; i < vec_getsize(&self->dobjects); i++)
+	{
+		if(self->dobjects[i] == dobject)
+		{
+			self->dobjects[i] = NULL;
+			break;
+		}
+	}
+}
+
 void dobjecthandler_update(struct DObjectHandler* self)
 {
 	log_assert(self, "is NULL");
 	for(size_t i = 0; i < vec_getsize(&self->dobjects); i++)
 	{
+		if(!self->dobjects[i])
+			continue;
+
 		DObjectBehavior behavior = self->dobjects[i]->behavior;
 		if(behavior)
 		{
@@ -51,6 +72,9 @@ void dobjecthandler_render(
 	log_assert(self, "is NULL");
 	for(size_t i = 0; i < vec_getsize(&self->dobjects); i++)
 	{
+		if(!self->dobjects[i])
+			continue;
+
 		DObjectRender render = self->dobjects[i]->render;
 		if(render)
 		{

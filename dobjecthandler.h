@@ -23,6 +23,10 @@ DObjectID dobjecthandler_add(
 	struct DObjectHandler* self, 
 	struct DObject* dobject
 );
+void dobjecthandler_remove(
+	struct DObjectHandler* self, 
+	struct DObject* dobject
+);
 void dobjecthandler_update(struct DObjectHandler* self);
 void dobjecthandler_render(
 	struct DObjectHandler* self, 

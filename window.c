@@ -105,7 +105,8 @@ int window_update(struct Window* self)
 	SDL_Event event;
 	if(self->read)
 	{
-		vec_collapse(&self->events, 0, vec_getsize(&self->events));
+		if(vec_getsize(&self->events))
+			vec_collapse(&self->events, 0, vec_getsize(&self->events));
 		self->read = 0;
 	}
 

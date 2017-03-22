@@ -86,7 +86,7 @@ void vec_expand_(Vec(void) vec, size_t pos, size_t elements)
 
 void vec_collapse_(Vec(void) vec, size_t pos, size_t elements)
 {
-	log_assert(elements, "Collapsing vec with 0 is unnecessary");
+	//log_assert(elements, "Collapsing vec with 0 is unnecessary");
 	struct Vec_* self = vec_tovector(vec);
 	log_assert(
 		self->size > pos, 
