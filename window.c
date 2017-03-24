@@ -2,23 +2,8 @@
 #include "log.h"
 #include <string.h>
 
-struct Window* window_ctor(
-	struct Window* self,
-	char* title, 
-	int width, 
-	int height, 
-	enum WindowFlags flags
-)
+void window_init(void)
 {
-	log_assert(self, "is NULL");
-	log_assert(title, "is NULL");
-	log_assert(width > 0, "invalid");
-	log_assert(height > 0, "invalid");
-	log_assert(
-		flags & WINDOW_CONTEXT || flags & WINDOW_RENDERER, 
-		"invalid flag"
-	);
-
 	SDL_version compile_version;
 	SDL_version link_version;
 
@@ -42,6 +27,25 @@ struct Window* window_ctor(
 
 	if(SDL_Init(SDL_INIT_VIDEO))
 		log_error(SDL_GetError());
+
+}
+
+struct Window* window_ctor(
+	struct Window* self,
+	char* title, 
+	int width, 
+	int height, 
+	enum WindowFlags flags
+)
+{
+	log_assert(self, "is NULL");
+	log_assert(title, "is NULL");
+	log_assert(width > 0, "invalid");
+	log_assert(height > 0, "invalid");
+	log_assert(
+		flags & WINDOW_CONTEXT || flags & WINDOW_RENDERER, 
+		"invalid flag"
+	);
 
 	self->raw = SDL_CreateWindow(
 		title,

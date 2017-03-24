@@ -54,6 +54,7 @@ struct Game* game_ctor(struct Game* self, int ticks, void* userdata)
 
 	self->scenes = vec_ctor(struct Scene*, 0);
 	self->userdata = userdata;
+	self->totalticks = 0;
 	self->ticks = ticks;
 	self->selectedscene = 0;
 	self->done = 0;
@@ -110,6 +111,7 @@ void game_start(struct Game* self)
 				{
 					scene->update(scene, self);
 					lag -= msperupdate;
+					self->totalticks++;
 				}
 			}
 

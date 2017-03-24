@@ -31,6 +31,7 @@ struct Window
 	int read; //Set to 1 after events has been handled
 };
 
+void window_init(void);
 struct Window* window_ctor(
 	struct Window* self,
 	char* title, 

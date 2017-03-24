@@ -9,6 +9,7 @@ struct Game
 	Vec(struct Scene*) scenes;
 	void* userdata;
 	size_t selectedscene;
+	int totalticks;
 	int ticks;
 	int done;
 };
