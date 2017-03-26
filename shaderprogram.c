@@ -76,6 +76,18 @@ ShaderProgram* shaderprogram_ctor(
 		vec_dtor(&logbuffer); //Because why not
 	}
 
+	glValidateProgram(program);
+	glGetProgramiv(program, GL_VALIDATE_STATUS, &success);
+	if(!success)
+	{
+		GLint size;
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
+		Str logbuffer = vec_ctor(char, size);
+		glGetProgramInfoLog(program, size, NULL, logbuffer);
+		log_error(logbuffer);
+		vec_dtor(&logbuffer); //Because why not
+	}
+
 	file_dtor(&vshaderfile);
 	file_dtor(&fshaderfile);
 
