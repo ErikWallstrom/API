@@ -53,7 +53,7 @@ struct Window* window_ctor(
 		SDL_WINDOWPOS_UNDEFINED,
 		width, 
 		height,
-		(flags == WINDOW_CONTEXT) ? 
+		(flags & WINDOW_CONTEXT) ? 
 			SDL_WINDOW_OPENGL : 
 			SDL_WINDOW_SHOWN
 	);
@@ -67,7 +67,11 @@ struct Window* window_ctor(
 			log_error(SDL_GetError());
 		if(flags & WINDOW_VSYNC)
 		{
-			SDL_GL_SetSwapInterval(1);
+			SDL_GL_SetSwapInterval(1); //-1?
+		}
+		else
+		{
+			SDL_GL_SetSwapInterval(0);
 		}
 	}
 	else if(flags & WINDOW_RENDERER)
@@ -140,7 +144,7 @@ int window_update(struct Window* self)
 	);
 
 	SDL_GetWindowSize(self->raw, &self->width, &self->height);
-	if(self->flags == WINDOW_CONTEXT)
+	if(self->flags & WINDOW_CONTEXT)
 		SDL_GL_SwapWindow(self->raw);
 	else
 	{
@@ -163,7 +167,7 @@ int window_update(struct Window* self)
 void window_dtor(struct Window* self)
 {
 	log_assert(self, "is NULL");
-	if(self->flags == WINDOW_CONTEXT)
+	if(self->flags & WINDOW_CONTEXT)
 		SDL_GL_DeleteContext(self->context);
 	else
 		SDL_DestroyRenderer(self->renderer);
