@@ -14,6 +14,7 @@ void str_append(Str* s, const char* s2);
 void str_prepend(Str* s, const char* s2);
 void str_appendwithchar(Str* s, char c);
 void str_prependwithchar(Str* s, char c);
+int str_equal(Str* s, const char* s2);
 void str_dtor(Str* s);
 
 #endif

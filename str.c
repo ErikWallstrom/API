@@ -81,13 +81,37 @@ void str_prepend(Str* s, const char* s2)
 void str_appendwithchar(Str* s, char c)
 {
 	log_assert(s, "s is NULL");
-	vec_insert(s, str_getlen(s) - 1, c);
+	if(str_getlen(s) == 0)
+		str_prependwithchar(s, c);
+	else
+		vec_insert(s, str_getlen(s) - 1, c);
 }
 
 void str_prependwithchar(Str* s, char c)
 {
 	log_assert(s, "s is NULL");
 	vec_push(s, c);
+}
+
+int str_equal(Str* s, const char* s2)
+{
+	log_assert(s, "s is NULL");
+	log_assert(s2, "s is NULL");
+
+	if(vec_getsize(s) - 1 != strlen(s2))
+	{
+		return 0;
+	}
+
+	for(size_t i = 0; i < vec_getsize(s) - 1; i++)
+	{
+		if((*s)[i] != s2[i])
+		{
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 void str_dtor(Str* s)

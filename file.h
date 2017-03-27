@@ -14,6 +14,7 @@ struct File
 {
 	FILE* raw;
 	Str content;
+	Str extension;
 	enum FileMode mode;
 };
 
