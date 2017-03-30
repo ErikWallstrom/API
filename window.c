@@ -116,7 +116,7 @@ int window_update(struct Window* self)
 	if(self->read)
 	{
 		if(vec_getsize(self->events))
-			vec_collapse(self->events, 0, vec_getsize(self->events));
+			vec_clear(self->events);
 		self->read = 0;
 	}
 
@@ -132,7 +132,6 @@ int window_update(struct Window* self)
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
 		case SDL_TEXTEDITING:
-
 		case SDL_TEXTINPUT:
 			vec_pushback(self->events, event);
 		default:

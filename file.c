@@ -49,6 +49,7 @@ struct File* file_ctor(
 			log_error(strerror(errno));
 
 		self->content = vec_ctor(char, filesize + 1);
+		log_info("%zu", filesize);
 		if(filesize)
 		{
 			vec_expand(self->content, 0, filesize + 1);
@@ -75,16 +76,14 @@ struct File* file_ctor(
 	}
 
 	self->extension = vec_ctor(char, 1);
-	self->extension[0] = '\0';
 	for(size_t i = 0; i < strlen(filename); i++)
 	{
 		if(filename[i] == '.')
 		{
 			for(size_t j = i; j < strlen(filename); j++)
 			{
-				vec_insert(
+				vec_pushback(
 					self->extension, 
-					vec_getsize(self->extension) - 2, 
 					filename[j]
 				);
 			}
@@ -93,6 +92,7 @@ struct File* file_ctor(
 		}
 	}
 
+	vec_pushback(self->extension, '\0');
 	return self;
 }
 
