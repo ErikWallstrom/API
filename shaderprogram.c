@@ -32,10 +32,10 @@ ShaderProgram* shaderprogram_ctor(
 	{
 		GLint size;
 		glGetShaderiv(vshader, GL_INFO_LOG_LENGTH, &size);
-		Str logbuffer = vec_ctor(char, size);
+		Vec(char) logbuffer = vec_ctor(char, size);
 		glGetShaderInfoLog(vshader, size, NULL, logbuffer);
 		log_error("In file \"%s\": %s", vshaderpath, logbuffer);
-		vec_dtor(&logbuffer); //Because why not
+		vec_dtor(logbuffer); //Because why not
 	}
 
 	FragmentShader fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -54,10 +54,10 @@ ShaderProgram* shaderprogram_ctor(
 	{
 		GLint size;
 		glGetShaderiv(fshader, GL_INFO_LOG_LENGTH, &size);
-		Str logbuffer = vec_ctor(char, size);
+		Vec(char) logbuffer = vec_ctor(char, size);
 		glGetShaderInfoLog(fshader, size, NULL, logbuffer);
 		log_error("In file \"%s\": %s", fshaderpath, logbuffer);
-		vec_dtor(&logbuffer); //Because why not
+		vec_dtor(logbuffer); //Because why not
 	}
 
 	ShaderProgram program = glCreateProgram();
@@ -70,10 +70,10 @@ ShaderProgram* shaderprogram_ctor(
 	{
 		GLint size;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
-		Str logbuffer = vec_ctor(char, size);
+		Vec(char) logbuffer = vec_ctor(char, size);
 		glGetProgramInfoLog(program, size, NULL, logbuffer);
 		log_error(logbuffer);
-		vec_dtor(&logbuffer); //Because why not
+		vec_dtor(logbuffer); //Because why not
 	}
 
 	glValidateProgram(program);
@@ -82,10 +82,10 @@ ShaderProgram* shaderprogram_ctor(
 	{
 		GLint size;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
-		Str logbuffer = vec_ctor(char, size);
+		Vec(char) logbuffer = vec_ctor(char, size);
 		glGetProgramInfoLog(program, size, NULL, logbuffer);
 		log_error(logbuffer);
-		vec_dtor(&logbuffer); //Because why not
+		vec_dtor(logbuffer); //Because why not
 	}
 
 	file_dtor(&vshaderfile);

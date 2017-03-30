@@ -66,7 +66,7 @@ void game_add(struct Game* self, struct Scene* scene)
 	log_assert(self, "is NULL");
 	log_assert(scene, "is NULL");
 
-	vec_pushback(&self->scenes, scene);
+	vec_pushback(self->scenes, scene);
 }
 
 int64_t game_getperformancefrequency(void)
@@ -102,7 +102,7 @@ void game_start(struct Game* self)
 		oldtime = curtime;
 		lag += delta;
 
-		if(vec_getsize(&self->scenes))
+		if(vec_getsize(self->scenes))
 		{
 			struct Scene* scene = self->scenes[self->selectedscene];
 			if(scene->update)
@@ -125,7 +125,7 @@ void game_start(struct Game* self)
 			{
 			case SCENECHANGE_NEXT:
 				log_assert(
-					self->selectedscene + 1 < vec_getsize(&self->scenes), 
+					self->selectedscene + 1 < vec_getsize(self->scenes), 
 					"scene does not exist"
 				);
 				self->scenes[self->selectedscene]->change = 
@@ -147,5 +147,5 @@ void game_start(struct Game* self)
 void game_dtor(struct Game* self)
 {
 	log_assert(self, "is NULL");
-	vec_dtor(&self->scenes);
+	vec_dtor(self->scenes);
 }

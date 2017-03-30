@@ -79,7 +79,7 @@ struct ArgParserResult argparser_parseoptions(
 	{
 		if(nextisarg || argv[i][0] != '-')	
 		{
-			vec_pushback(&result.args, argv[i]);
+			vec_pushback(result.args, argv[i]);
 			nextisarg = 0;
 			continue;
 		}

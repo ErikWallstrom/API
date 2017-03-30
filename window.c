@@ -27,7 +27,6 @@ void window_init(void)
 
 	if(SDL_Init(SDL_INIT_VIDEO))
 		log_error(SDL_GetError());
-
 }
 
 struct Window* window_ctor(
@@ -102,7 +101,10 @@ struct Window* window_ctor(
 		&self->mousey
 	);
 
-	self->title = str_ctor(title);
+	size_t titlelen = strlen(title);
+	self->title = vec_ctor(char, titlelen + 1);
+	strcpy(self->title, title);
+
 	self->events = vec_ctor(SDL_Event, 0);
 	return self;
 }
@@ -113,8 +115,8 @@ int window_update(struct Window* self)
 	SDL_Event event;
 	if(self->read)
 	{
-		if(vec_getsize(&self->events))
-			vec_collapse(&self->events, 0, vec_getsize(&self->events));
+		if(vec_getsize(self->events))
+			vec_collapse(self->events, 0, vec_getsize(self->events));
 		self->read = 0;
 	}
 
@@ -132,7 +134,7 @@ int window_update(struct Window* self)
 		case SDL_TEXTEDITING:
 
 		case SDL_TEXTINPUT:
-			vec_pushback(&self->events, event);
+			vec_pushback(self->events, event);
 		default:
 			continue;
 		}
@@ -172,8 +174,8 @@ void window_dtor(struct Window* self)
 	else
 		SDL_DestroyRenderer(self->renderer);
 
-	str_dtor(&self->title);
-	vec_dtor(&self->events);
+	vec_dtor(self->title);
+	vec_dtor(self->events);
 	SDL_DestroyWindow(self->raw);
 	SDL_Quit();
 }

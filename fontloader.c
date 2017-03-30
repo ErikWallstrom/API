@@ -46,11 +46,11 @@ FontID fontloader_load(struct FontLoader* self, const char* file, size_t size)
 	if(!font)
 		log_error(TTF_GetError());
 
-	vec_pushback(&self->fonts, (struct Font){
+	vec_pushback(self->fonts, (struct Font){
 		.raw = font,
 		.size = size
 	});
-	return vec_getsize(&self->fonts) - 1;
+	return vec_getsize(self->fonts) - 1;
 }
 
 void fontloader_render(
@@ -64,7 +64,7 @@ void fontloader_render(
 	log_assert(self, "is NULL");
 	log_assert(texture, "is NULL");
 	log_assert(text, "is NULL");
-	log_assert(font < vec_getsize(&self->fonts), "invalid FontID");
+	log_assert(font < vec_getsize(self->fonts), "invalid FontID");
 	log_assert(
 		quality == FONTQUALITY_LOW || 
 			quality == FONTQUALITY_HIGH, 
@@ -113,9 +113,9 @@ void fontloader_render(
 void fontloader_dtor(struct FontLoader* self)
 {
 	log_assert(self, "is NULL");
-	for(size_t i = 0; i < vec_getsize(&self->fonts); i++)
+	for(size_t i = 0; i < vec_getsize(self->fonts); i++)
 		TTF_CloseFont(self->fonts[i].raw);
 
-	vec_dtor(&self->fonts);
+	vec_dtor(self->fonts);
 	TTF_Quit();
 }

@@ -2,7 +2,7 @@
 #define FILE_H
 
 #include <stdio.h>
-#include "str.h"
+#include "vec.h"
 
 enum FileMode
 {
@@ -13,7 +13,7 @@ enum FileMode
 struct File
 {
 	FILE* raw;
-	Str content;
+	Vec(char) content;
 	enum FileMode mode;
 };
 

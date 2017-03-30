@@ -127,7 +127,7 @@ void server_sendtcp(
 	if(sent < (int)bufsize) /* not sent */
 	{
 		int index = -1;
-		for(size_t i = 0; i < vec_getsize(&self->tcpclients); i++)
+		for(size_t i = 0; i < vec_getsize(self->tcpclients); i++)
 		{
 			if(self->tcpclients[i].socket == dest->socket)
 			{
@@ -141,7 +141,7 @@ void server_sendtcp(
 		SDLNet_TCP_DelSocket(self->tcpsocketset, dest->socket);
 		SDLNet_TCP_Close(dest->socket);
 
-		vec_collapse(&self->tcpclients, index, 1);
+		vec_collapse(self->tcpclients, index, 1);
 		if(self->tcphandlers.tcpdisconnect)
 		{
 			self->tcphandlers.tcpdisconnect(
@@ -196,13 +196,13 @@ void server_update(struct Server* self)
 			{
 				if(self->tcphandlers.tcpconnect(
 					&client,
-					((int)vec_getsize(&self->tcpclients) >= 
+					((int)vec_getsize(self->tcpclients) >= 
 					 	self->tcpmaxclients) ? 1 : 0,
 					self->userdata
 				)) /* API user wants client to connect */
 				{
 					SDLNet_TCP_AddSocket(self->tcpsocketset, client.socket);
-					vec_pushback(&self->tcpclients, client);
+					vec_pushback(self->tcpclients, client);
 				}
 				else /* API user don't want client to connect */
 				{
@@ -212,11 +212,11 @@ void server_update(struct Server* self)
 			else /* default behavior */
 			{
 				SDLNet_TCP_AddSocket(self->tcpsocketset, client.socket);
-				vec_pushback(&self->tcpclients, client);
+				vec_pushback(self->tcpclients, client);
 			}
 		}
 
-		for(size_t i = 0; i < vec_getsize(&self->tcpclients); i++)
+		for(size_t i = 0; i < vec_getsize(self->tcpclients); i++)
 		{
 			if(SDLNet_SocketReady(self->tcpclients[i].socket))
 			{
@@ -231,7 +231,7 @@ void server_update(struct Server* self)
 					SDLNet_TCP_DelSocket(self->tcpsocketset, c.socket);
 					SDLNet_TCP_Close(c.socket);
 
-					vec_collapse(&self->tcpclients, i, 1);
+					vec_collapse(self->tcpclients, i, 1);
 					if(self->tcphandlers.tcpdisconnect)
 					{
 						self->tcphandlers.tcpdisconnect(
@@ -258,7 +258,7 @@ void server_update(struct Server* self)
 							SDLNet_TCP_DelSocket(self->tcpsocketset, c.socket);
 							SDLNet_TCP_Close(c.socket);
 
-							vec_collapse(&self->tcpclients, i, 1);
+							vec_collapse(self->tcpclients, i, 1);
 							if(self->tcphandlers.tcpdisconnect)
 							{
 								self->tcphandlers.tcpdisconnect(
@@ -305,11 +305,11 @@ void server_dtor(struct Server* self)
 
 	if(self->type & SERVERTYPE_TCP)
 	{
-		for(size_t i = 0; i < vec_getsize(&self->tcpclients); i++)
+		for(size_t i = 0; i < vec_getsize(self->tcpclients); i++)
 			SDLNet_TCP_Close(self->tcpclients[i].socket);
 
 		free(self->tcpbuffer);
-		vec_dtor(&self->tcpclients);
+		vec_dtor(self->tcpclients);
 		SDLNet_TCP_Close(self->tcpsocket);
 		SDLNet_FreeSocketSet(self->tcpsocketset);
 	}

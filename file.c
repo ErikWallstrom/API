@@ -47,7 +47,7 @@ struct File* file_ctor(
 		self->content = vec_ctor(char, filesize + 1);
 		if(filesize)
 		{
-			vec_expand(&self->content, 0, filesize + 1);
+			vec_expand(self->content, 0, filesize + 1);
 			self->content[filesize] = '\0';
 			size_t actuallyread = fread(
 				self->content, 
@@ -66,7 +66,8 @@ struct File* file_ctor(
 	}
 	else
 	{
-		self->content = str_ctor("");
+		self->content = vec_ctor(char, 1);
+		self->content[0] = '\0';
 	}
 
 	return self;
@@ -89,6 +90,6 @@ void file_dtor(struct File* self)
 		file_write(self);
 	}
 
-	str_dtor(&self->content);
+	vec_dtor(self->content);
 	fclose(self->raw);
 }
