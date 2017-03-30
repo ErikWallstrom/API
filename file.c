@@ -40,9 +40,13 @@ struct File* file_ctor(
 	self->mode = mode;
 	if(self->mode & FILEMODE_READ)
 	{
-		fseek(self->raw, 0, SEEK_END);
+		if(fseek(self->raw, 0, SEEK_END))
+			log_error(strerror(errno));
 		long filesize = ftell(self->raw);
-		fseek(self->raw, 0, SEEK_SET);
+		if(filesize == -1L)
+			log_error(strerror(errno));
+		if(fseek(self->raw, 0, SEEK_SET))
+			log_error(strerror(errno));
 
 		self->content = vec_ctor(char, filesize + 1);
 		if(filesize)
@@ -70,6 +74,25 @@ struct File* file_ctor(
 		self->content[0] = '\0';
 	}
 
+	self->extension = vec_ctor(char, 1);
+	self->extension[0] = '\0';
+	for(size_t i = 0; i < strlen(filename); i++)
+	{
+		if(filename[i] == '.')
+		{
+			for(size_t j = i; j < strlen(filename); j++)
+			{
+				vec_insert(
+					self->extension, 
+					vec_getsize(self->extension) - 2, 
+					filename[j]
+				);
+			}
+
+			break;
+		}
+	}
+
 	return self;
 }
 
@@ -90,6 +113,7 @@ void file_dtor(struct File* self)
 		file_write(self);
 	}
 
+	vec_dtor(self->extension);
 	vec_dtor(self->content);
 	fclose(self->raw);
 }

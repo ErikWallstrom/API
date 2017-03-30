@@ -14,6 +14,7 @@ struct File
 {
 	FILE* raw;
 	Vec(char) content;
+	Vec(char) extension;
 	enum FileMode mode;
 };
 
