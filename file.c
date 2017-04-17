@@ -49,7 +49,6 @@ struct File* file_ctor(
 			log_error(strerror(errno));
 
 		self->content = vec_ctor(char, filesize + 1);
-		log_info("%zu", filesize);
 		if(filesize)
 		{
 			vec_expand(self->content, 0, filesize + 1);
