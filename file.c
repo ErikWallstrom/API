@@ -75,16 +75,14 @@ struct File* file_ctor(
 	}
 
 	self->extension = vec_ctor(char, 1);
-	self->extension[0] = '\0';
 	for(size_t i = 0; i < strlen(filename); i++)
 	{
 		if(filename[i] == '.')
 		{
 			for(size_t j = i; j < strlen(filename); j++)
 			{
-				vec_insert(
+				vec_pushback(
 					self->extension, 
-					vec_getsize(self->extension) - 2, 
 					filename[j]
 				);
 			}
@@ -93,6 +91,7 @@ struct File* file_ctor(
 		}
 	}
 
+	vec_pushback(self->extension, '\0');
 	return self;
 }
 

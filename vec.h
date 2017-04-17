@@ -2,6 +2,7 @@
 #define VEC_H
 
 #include <stddef.h>
+#include <string.h>
 
 #define Vec(T) T*
 
@@ -13,13 +14,24 @@
 
 #define vec_insert(v, p, ...) \
 	vec_expand((v), (p), 1), (v)[p] = __VA_ARGS__
-#define vec_remove(v, p) vec_collapse((v), p, 1)
+#define vec_remove(v, p) vec_collapse((v), (p), 1)
 #define vec_push(v, ...) vec_insert((v), 0, __VA_ARGS__)
 #define vec_pushback(v, ...) \
 	vec_expand((v), vec_getsize(v), 1), \
 	(v)[vec_getsize(v) - 1] = __VA_ARGS__
 #define vec_pop(v) vec_collapse((v), 0, 1)
 #define vec_popback(v) vec_collapse((v), vec_getsize(v) - 1, 1)
+#define vec_set(v, a, n) \
+	vec_collapse((v), 0, vec_getsize((v))), \
+	vec_expand((v), 0, (n)), \
+	memcpy((v), (a), (n) * sizeof(*(a)))
+#define vec_clear(v) vec_collapse((v), 0, vec_getsize((v)))
+#define vec_pushbackwitharr(v, a, n) \
+	vec_expand((v), vec_getsize((v)), (n)), \
+	memcpy((v) + vec_getsize((v)), (a), (n) * sizeof(*(a)))
+#define vec_pushwitharr(v, a, n) \
+	vec_expand((v), 0, (n)), \
+	memcpy((v), (a), (n) * sizeof(*(a)))
 
 Vec(void) vec_ctor_(size_t elementsize, size_t elements);
 void vec_dtor_(Vec(void) vec);

@@ -1,7 +1,6 @@
 #include "vec.h"
 #include "log.h"
 #include <stdlib.h>
-#include <string.h>
 
 #define VEC_DEFAULT_SIZE 5
 #define VEC_NEW_SIZE 5
